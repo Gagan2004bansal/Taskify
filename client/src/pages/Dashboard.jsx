@@ -1,224 +1,239 @@
 import React from 'react';
-import {
-  MdAdminPanelSettings,
-  MdKeyboardArrowDown,
-  MdKeyboardArrowUp,
-  MdKeyboardDoubleArrowUp
-} from "react-icons/md";
-// import { LuClipboardEdit } from "react-icons/lu";
-import { FaUsers, FaNewspaper } from "react-icons/fa";
-import { FaArrowsToDot } from 'react-icons/fa6';
 import moment from "moment";
-import { summary, tasks } from "../assets/data";
-import clsx from "clsx";
-import Chart from '../components/Chart';
-import { BGS, PRIOTITYSTYELS, TASK_TYPE, getInitials } from "../utils";
-import UserInfo from '../components/UserInfo';
+import {
+    ResponsiveContainer,
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+} from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import {
+    Clock,
+    CheckCircle,
+    Users,
+    TrendingUp,
+    Layers,
+    Star
+} from 'lucide-react';
+import { summary, chartData, activitiesData } from '../assets/data';
+import { getInitials, TASK_TYPE } from '../utils/index';
 
 
-const TaskTable = ({ tasks }) => {
-  const ICONS = {
-    high: <MdKeyboardDoubleArrowUp />,
-    medium: <MdKeyboardArrowUp />,
-    low: <MdKeyboardArrowDown />,
-  };
-
-  const TableHeader = () => (
-    <thead className='border-b border-gray-300'>
-      <tr className='text-slate-800 text-left'>
-        <th className='py-2'>Task Title</th>
-        <th className='py-2'>Priority</th>
-        <th className='py-2'>Team</th>
-        <th className='py-2 hidden md:block'>Created At</th>
-      </tr>
-    </thead>
-  );
-
-  const TableRow = ({ task }) => (
-    <tr className='border-b border-gray-300 text-slate-800 hover:bg-slate-500/10'>
-      <td className='py-2'>
-        <div className='flex items-center gap-2'>
-          <div className={clsx("w-4 h-4 rounded-full", TASK_TYPE[task.stage])}></div>
-
-          <p className='text-base text-black'>{task.title}</p>
-        </div>
-      </td>
-
-      <td className='py-2'>
-        <div className='flex gap-1 items-center'>
-          <span className={clsx("text-lg", PRIOTITYSTYELS[task.priority])}>{ICONS[task.priority]}</span>
-          <span className='capitalize'>{task.priority}</span>
-        </div>
-      </td>
-
-      <td className='py-2'>
-        <div className='flex'>
-          {task.team.map((m, index) => (
-            <div key={index} className={clsx("w-7 h-7 rounded-full text-white flex items-center justify-center text-sm -mr-1", BGS[index % BGS.length])}>
-              <UserInfo user={m} />
+const StatsCard = ({ icon: Icon, label, value, trend, color }) => (
+    <Card className="relative overflow-hidden">
+        <CardContent className="p-6">
+            <div className={`absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full opacity-10 ${color}`} />
+            <div className="flex items-center space-x-4">
+                <div className={`p-3 rounded-xl ${color}`}>
+                    <Icon className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                    <p className="text-3xl font-bold">{value}</p>
+                    <p className="text-sm text-muted-foreground">{label}</p>
+                </div>
             </div>
-          ))}
-        </div>
-      </td>
+            {trend && (
+                <div className={`mt-4 text-sm ${trend > 0 ? 'text-green-500' : 'text-red-500'} flex items-center`}>
+                    {trend > 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingUp className="w-4 h-4 mr-1 rotate-180" />}
+                    {Math.abs(trend)}% from last month
+                </div>
+            )}
+        </CardContent>
+    </Card>
+);
 
-      <td className='py-2 hidden md:block'>
-        <span className='text-base text-gray-600'>
-          {moment(task?.date).fromNow()}
-        </span>
-      </td>
+const TaskCard = ({ task }) => (
+    <Card className="group hover:shadow-lg transition-all duration-300">
+        <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full ${TASK_TYPE[task.stage]}`} />
+                        <span className="text-sm font-medium text-muted-foreground capitalize">
+                            {task.stage}
+                        </span>
+                    </div>
+                    <h4 className="font-semibold group-hover:text-primary transition-colors line-clamp-2">
+                        {task.title}
+                    </h4>
+                </div>
+                <Badge variant={task.priority === 'high' ? 'destructive' : 'secondary'}>
+                    {task.priority}
+                </Badge>
+            </div>
 
-    </tr>
-  );
+            <div className="mt-4 flex items-center justify-between">
+                <div className="flex -space-x-2">
+                    {task.team.slice(0, 3).map((member, idx) => (
+                        <Avatar key={idx} className="border-2 border-background w-8 h-8">
+                            <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                                {getInitials(member?.name)}
+                            </AvatarFallback>
+                        </Avatar>
+                    ))}
+                    {task.team.length > 3 && (
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center border-2 border-background">
+                            <span className="text-xs">+{task.team.length - 3}</span>
+                        </div>
+                    )}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                    {moment(task?.date).fromNow()}
+                </div>
+            </div>
+        </CardContent>
+    </Card>
+);
 
-
-  return (
-    <>
-      <div className='w-full md:w-2/3 bg-white px-2 md:px-4 pt-4 pb-4 shadow-md rounded-md'>
-        <table className='w-full'>
-          <TableHeader />
-          <tbody>
-            {
-              tasks?.map((task, id) => (
-                <TableRow key={id} task={task} />
-              ))
-            }
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
-}
-
-const UserTable = ({ users }) => {
-  const TableHeader = () => (
-    <thead className='border-b border-gray-300 '>
-      <tr className='text-black  text-left'>
-        <th className='py-2'>Full Name</th>
-        <th className='py-2'>Status</th>
-        <th className='py-2'>Created At</th>
-      </tr>
-    </thead>
-  );
-
-  const TableRow = ({ user }) => (
-    <tr className='border-b border-gray-200  text-gray-600 hover:bg-gray-400/10'>
-      <td className='py-2'>
-        <div className='flex items-center gap-3'>
-          <div className='w-9 h-9 rounded-full text-white flex items-center justify-center text-sm bg-violet-700'>
-            <span className='text-center'>{getInitials(user?.name)}</span>
-          </div>
-
-          <div>
-            <p> {user.name}</p>
-            <span className='text-xs text-black'>{user?.role}</span>
-          </div>
-        </div>
-      </td>
-
-      <td>
-        <p
-          className={clsx(
-            "w-fit px-3 py-1 rounded-full text-sm",
-            user?.isActive ? "bg-blue-200" : "bg-yellow-100"
-          )}
-        >
-          {user?.isActive ? "Active" : "Disabled"}
-        </p>
-      </td>
-      <td className='py-2 text-sm'>{moment(user?.createdAt).fromNow()}</td>
-    </tr>
-  );
-
-  return (
-    <div className='w-full md:w-1/3 bg-white h-fit px-2 md:px-6 py-4 shadow-md rounded'>
-      <table className='w-full mb-5'>
-        <TableHeader />
-        <tbody>
-          {users?.map((user, index) => (
-            <TableRow key={index + user?._id} user={user} />
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
 
 const Dashboard = () => {
+    const stats = [
+        { icon: Layers, label: 'Total Tasks', value: summary.totalTasks, trend: 12, color: 'bg-blue-500' },
+        { icon: CheckCircle, label: 'Completed', value: summary.tasks.completed, trend: 8, color: 'bg-green-500' },
+        { icon: Clock, label: 'In Progress', value: summary.tasks['in progress'], trend: -5, color: 'bg-amber-500' },
+        { icon: Users, label: 'Team Members', value: summary.users.length, color: 'bg-purple-500' }
+    ];
 
-  const totals = summary?.tasks;
+    const pieData = [
+        { name: 'Todo', value: summary.tasks.todo },
+        { name: 'In Progress', value: summary.tasks['in progress'] },
+        { name: 'Completed', value: summary.tasks.completed }
+    ];
 
-  const stats = [
-    {
-      _id: "1",
-      label: "TOTAL TASK",
-      total: summary?.totalTasks || 0,
-      icon: <FaNewspaper />,
-      bg: "bg-[#1d4ed8]",
-    },
-    {
-      _id: "2",
-      label: "COMPLTED TASK",
-      total: totals["completed"] || 0,
-      icon: <MdAdminPanelSettings />,
-      bg: "bg-[#0f766e]",
-    },
-    {
-      _id: "3",
-      label: "TASK IN PROGRESS ",
-      total: totals["in progress"] || 0,
-      icon: <MdAdminPanelSettings />,
-      bg: "bg-[#f59e0b]",
-    },
-    {
-      _id: "4",
-      label: "TODOS",
-      total: totals["todo"],
-      icon: <FaArrowsToDot />,
-      bg: "bg-[#be185d]" || 0,
-    },
-  ];
-
-  const Card = ({ label, count, bg, icon }) => {
     return (
-      <div className='w-full h-32 bg-white p-5 shadow-md rounded-md flex items-center justify-between'>
+        <div className="p-8 space-y-8 bg-gradient-to-b from-background to-muted/20">
+            <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-center">
+                    <h1 className="text-4xl font-bold tracking-tight">Welcome back, Team 👋</h1>
+                    <p className="text-muted-foreground">{moment().format('MMMM Do, YYYY')}</p>
+                </div>
+                <p className="text-muted-foreground">Here's what's happening with your projects today</p>
 
-        <div className='h-full flex flex-1 flex-col justify-between'>
-          <p className='text-base text-slate-800'>{label}</p>
-          <span className='text-2xl font-semibold'>{count}</span>
-          <span className='text-sm text-gray-400'>{"110 last month"}</span>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {stats.map((stat, i) => (
+                    <StatsCard key={i} {...stat} />
+                ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
+                <Card className="lg:col-span-8">
+                    <CardHeader>
+                        <CardTitle>Task Distribution</CardTitle>
+                        <CardDescription>Task priority breakdown</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartData}>
+                                <defs>
+                                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                                <XAxis dataKey="name" />
+                                <YAxis />
+                                <Tooltip />
+                                <Area
+                                    type="monotone"
+                                    dataKey="total"
+                                    stroke="#8884d8"
+                                    fill="url(#colorTotal)"
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-4">
+                    <CardHeader>
+                        <CardTitle>Recent Activity</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ScrollArea className="h-[300px]">
+                            <div className="space-y-4">
+                                {activitiesData.map((activity, i) => (
+                                    <div key={i} className="flex gap-3">
+                                        <div className={`p-2 rounded-full ${activity.type === 'completed' ? 'bg-green-100 text-green-600' : activity.type === 'started' ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}`}>
+                                            {activity.type === 'completed' ? <CheckCircle className="w-4 h-4" /> : activity.type === 'started' ? <Clock className="w-4 h-4" /> : <Star className="w-4 h-4" />}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium">{activity.by}</p>
+                                            <p className="text-sm text-muted-foreground">{activity.activity}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Recent Tasks</CardTitle>
+                                <CardDescription>Latest updates from your team</CardDescription>
+                            </div>
+                            <Badge variant="outline" className="ml-auto">
+                                {summary.last10Task.length} tasks
+                            </Badge>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <ScrollArea className="h-[400px] pr-4">
+                            <div className="space-y-4">
+                                {summary.last10Task?.map((task, index) => (
+                                    <TaskCard key={index} task={task} />
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Team Members</CardTitle>
+                        <CardDescription>Active team collaboration</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ScrollArea className="h-[400px]">
+                            <div className="space-y-4">
+                                {summary.users?.map((user, index) => (
+                                    <div key={index}
+                                        className="flex items-center gap-4 p-4 hover:bg-muted/50 rounded-lg transition-colors">
+                                        <Avatar className="h-10 w-10">
+                                            <AvatarFallback className="bg-primary text-primary-foreground">
+                                                {getInitials(user?.name)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium truncate">{user.name}</p>
+                                            <p className="text-sm text-muted-foreground">{user.role}</p>
+                                        </div>
+                                        <Badge variant={user?.isActive ? "success" : "secondary"}>
+                                            {user?.isActive ? "Active" : "Away"}
+                                        </Badge>
+                                    </div>
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
-
-        <div className={clsx("w-10 h-10 rounded-full flex items-center justify-center text-white", bg)}>{icon}</div>
-
-      </div>
     );
-  }
+};
 
-  return (
-    <div className='h-full py-4'>
-
-      <div className='grid grid-cols-1 md:grid-cols-4 gap-5'>
-        {
-          stats.map(({ icon, bg, label, total }, index) => (
-            <Card key={index} icon={icon} bg={bg} label={label} count={total} />
-          ))
-        }
-      </div>
-
-      <div className='w-full bg-white my-16 p-4 rounded shadow-sm'>
-        <h4 className='text-xl text-slate-800 font-semibold'>Chart by Priority</h4>
-        <Chart />
-      </div>
-
-      <div className='w-full flex flex-col md:flex-row gap-4 2xl:gap-10 py-8'>
-        {/* left */}
-        <TaskTable tasks={summary.last10Task} />
-        {/* Right */}
-        <UserTable users={summary.users} />
-      </div>
-
-    </div>
-  );
-}
-
-export default Dashboard
+export default Dashboard;
