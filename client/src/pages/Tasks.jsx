@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import BoardView from "../components/BoardView";
 import { tasks } from "../assets/data";
-import Table from "../components/task/Table";
+import ListView from "../components/task/ListView";
 import AddTask from "../components/task/AddTask";
 
 import { Button } from "@/components/ui/button";
@@ -56,16 +56,18 @@ const Tasks = () => {
       <div className='flex items-center justify-between mb-4'>
 
         <div className="space-y-1">
-          <h2 className="text-2xl font-semibold">Tasks</h2>
+          <h2 className="text-2xl font-semibold capitalize">{title}</h2>
           <p className="text-sm text-muted-foreground">
             Manage and organize your tasks efficiently
           </p>
         </div>
 
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Create Task
-        </Button>
+        {!status && (
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Task
+          </Button>
+        )}
 
       </div>
 
@@ -83,7 +85,7 @@ const Tasks = () => {
         </TabsList>
 
         <div className="grid grid-cols-3 gap-2 md:gap-6 w-full my-4">
-          {Object.entries(TASK_TYPES).map(([key, { label, color }]) => (
+          {!status && Object.entries(TASK_TYPES).map(([key, { label, color }]) => (
             <Card key={key} className="p-3 flex items-center justify-between bg-white shadow-sm hover:shadow transition-shadow">
               <div className="flex items-center gap-3">
                 <div className={`w-2.5 h-2.5 rounded-full ${color.split(' ')[0]}`} />
@@ -104,7 +106,7 @@ const Tasks = () => {
           <BoardView tasks={tasks} />
         </TabsContent>
         <TabsContent value="list">
-          <Table tasks={tasks} />
+          <ListView tasks={tasks} />
         </TabsContent>
 
       </Tabs>
