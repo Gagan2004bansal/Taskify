@@ -8,8 +8,6 @@ import TasksDetails from "./pages/TasksDetails";
 
 import { Toaster } from "sonner";
 import { useDispatch, useSelector } from 'react-redux';
-import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
@@ -46,19 +44,13 @@ function MobileSidebar() {
     const dispatch = useDispatch();
 
     return (
-        <Sheet open={isSidebarOpen} onOpenChange={() => dispatch(setOpenSidebar())}>
-            <SheetContent side="left" className="w-[300px] p-0">
+        <Sheet open={isSidebarOpen && window.innerWidth < 768} onOpenChange={() => dispatch(setOpenSidebar())}>
+            <SheetContent side="left" className="w-[300px] px-0">
                 <SheetHeader className="p-4">
                     <SheetTitle className="text-left sr-only">Navigation</SheetTitle>
                     <SheetDescription className="sr-only">
                         Application navigation menu
                     </SheetDescription>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-4 top-4"
-                        onClick={() => dispatch(setOpenSidebar())}
-                    />
                 </SheetHeader>
                 <Sidebar />
             </SheetContent>

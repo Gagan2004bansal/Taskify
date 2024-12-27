@@ -529,6 +529,7 @@ export const summary = {
       role: "Developer",
       isActive: true,
       createdAt: "2024-02-09T09:38:07.765Z",
+      email: "newuser@example.com",
     },
     {
       _id: "65c3176a0fd860f958baa099",
@@ -537,6 +538,7 @@ export const summary = {
       role: "Analyst",
       isActive: true,
       createdAt: "2024-02-07T05:38:50.816Z",
+      email: "emilywilson@example.com",
     },
     {
       _id: "65c317360fd860f958baa08e",
@@ -545,6 +547,7 @@ export const summary = {
       role: "Designer",
       isActive: true,
       createdAt: "2024-02-07T05:37:58.862Z",
+      email: "alexjohnson@example.com",
     },
     {
       _id: "65c30b96e639681a13def0b5",
@@ -553,6 +556,7 @@ export const summary = {
       role: "Manager",
       isActive: true,
       createdAt: "2024-02-07T04:48:22.519Z",
+      email: "janesmith@example.com",
     },
     {
       _id: "65c202d4aa62f32ffd1303cc",
@@ -561,6 +565,7 @@ export const summary = {
       role: "Admin",
       createdAt: "2024-02-06T09:58:44.794Z",
       isActive: true,
+      email: "codewaveasante@example.com",
     },
   ],
   tasks: {
@@ -725,32 +730,25 @@ export const tasks = [
     isTrashed: false,
     activities: [
       {
-        type: "assigned",
-        activity: "Test activity. Let's go!!!",
-        date: "2024-02-08T17:55:34.353Z",
-        by: "65c202d4aa62f32ffd1303cc",
-        _id: "65c5188be1585cfa650b79c4",
-      },
-      {
-        type: "in progress",
-        activity: "Project is progress. Hiope to fin=ish soon!!",
-        date: "2024-02-08T17:55:34.353Z",
-        by: "65c202d4aa62f32ffd1303cc",
-        _id: "65c518dce1585cfa650b79da",
-      },
-      {
-        type: "bug",
-        activity: "Bug found in the code. Kindly check and fixed ASAP!!!",
+        type: "started",
+        activity: "Project completed!!",
         date: "2024-02-08T18:13:14.717Z",
-        by: "65c202d4aa62f32ffd1303cc",
-        _id: "65c51a5e8064df97d208b392",
+        by: { _id: "65c202d4aa62f32ffd1303cc", name: "Codewave" },
+        _id: "65c51b998064dfd208b3f9",
       },
       {
         type: "commented",
-        activity: "Nice work. Let's finished hard!!!",
+        activity: "Project completed!!",
         date: "2024-02-08T18:13:14.717Z",
-        by: "65c202d4aa62f32ffd1303cc",
-        _id: "65c51af08064df97d208b3b0",
+        by: { _id: "65c202d4aa62f32ffd1303cc", name: "Codewave" },
+        _id: "65c51b98064df97d208b3f9",
+      },
+      {
+        type: "completed",
+        activity: "Project completed!!",
+        date: "2024-02-08T18:13:14.717Z",
+        by: { _id: "65c202d4aa62f32ffd1303cc", name: "Codewave" },
+        _id: "65c51b998064df97d208b3f9",
       },
     ],
     subTasks: [

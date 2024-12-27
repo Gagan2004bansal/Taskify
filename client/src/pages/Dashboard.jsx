@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { summary, chartData, activitiesData } from '../assets/data';
 import { getInitials, TASK_TYPE } from '../utils/index';
+import { useSelector } from 'react-redux';
+
 
 
 const StatsCard = ({ icon: Icon, label, value, trend, color }) => (
@@ -93,6 +95,9 @@ const TaskCard = ({ task }) => (
 
 
 const Dashboard = () => {
+
+    const { user } = useSelector((state) => state.auth);
+
     const stats = [
         { icon: Layers, label: 'Total Tasks', value: summary.totalTasks, trend: 12, color: 'bg-blue-500' },
         { icon: CheckCircle, label: 'Completed', value: summary.tasks.completed, trend: 8, color: 'bg-green-500' },
@@ -109,9 +114,11 @@ const Dashboard = () => {
     return (
         <div className="p-8 space-y-8 bg-gradient-to-b from-background to-muted/20">
             <div className="flex flex-col gap-2">
-                <div className="flex justify-between items-center">
-                    <h1 className="text-4xl font-bold tracking-tight">Welcome back, Team 👋</h1>
-                    <p className="text-muted-foreground">{moment().format('MMMM Do, YYYY')}</p>
+                <div className="flex justify-between items-center gap-2">
+                    <h1 className="text-4xl font-bold tracking-tight">Welcome back, {user?.name} 👋</h1>
+                    <Badge variant="secondary" className="ml-auto">
+                        {moment().format('MMMM Do, YYYY')}
+                    </Badge>
                 </div>
                 <p className="text-muted-foreground">Here's what's happening with your projects today</p>
 
