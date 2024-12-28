@@ -14,16 +14,6 @@ import {
 } from "@/components/ui/hover-card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   ChevronUp,
   ChevronDown,
   ArrowUp,
@@ -34,15 +24,26 @@ import {
   Clock,
   Users,
   FileText,
-  CheckSquare
+  Minus,
+  Edit3,
+  CopyCheck,
+  Trash2
 } from 'lucide-react';
-import { Menu, Transition } from "@headlessui/react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { getInitials } from '../utils';
+import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import AddTask from '../components/task/AddTask';
+import AddSubTask from '../components/task/AddSubTask';
 
-const BoardView = ({ tasks = [] }) => {
-  const [openDialog, setOpenDialog] = useState(false);
-  const [selectedTask, setSelectedTask] = useState(null);
-  const [openTaskDialog, setOpenTaskDialog] = useState(false);
-  const [openSubTaskDialog, setOpenSubTaskDialog] = useState(false);
+const BoardView = ({ tasks }) => {
+
+  const navigate = useNavigate();
 
   const PRIORITY_CONFIG = {
     high: {
@@ -59,6 +60,11 @@ const BoardView = ({ tasks = [] }) => {
       icon: ChevronDown,
       class: "text-blue-500",
       badge: "bg-blue-100 text-blue-700 border-blue-200"
+    },
+    normal: {
+      icon: Minus,
+      class: "text-gray-500",
+      badge: "bg-gray-100 text-gray-700 border-gray-200"
     }
   };
 
@@ -69,79 +75,69 @@ const BoardView = ({ tasks = [] }) => {
     blocked: "bg-red-500"
   };
 
-  const formatDate = (date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(new Date(date));
-  };
-
-  const handleTaskOptions = (task) => {
-    setSelectedTask(task);
-    setOpenTaskDialog(true);
-  };
+  const formatDate = (date) => format(new Date(date), "MMM d, hh:mm a");
+  const [openTaskDialog, setOpenTaskDialog] = useState(false);
+  const [openSubTaskDialog, setOpenSubTaskDialog] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
   const TaskDialog = ({ task }) => {
     const menuItems = [
       {
         label: "Open Task",
         icon: <FileText className="h-4 w-4" />,
-        onClick: () => console.log("Open task", task._id)
+        onClick: () => navigate(`/task/${task._id}`),
       },
       {
         label: "Edit",
-        icon: <MessageSquare className="h-4 w-4" />,
-        onClick: () => setOpenTaskDialog(true)
+        icon: <Edit3 className="h-4 w-4" />,
+        onClick: () => {
+          setSelectedTask(task);
+          setOpenTaskDialog(true);
+        }
       },
       {
         label: "Add Sub-Task",
         icon: <ListTodo className="h-4 w-4" />,
-        onClick: () => setOpenSubTaskDialog(true)
+        onClick: () => {
+          setOpenSubTaskDialog(true);
+        }
       },
       {
         label: "Duplicate",
-        icon: <CheckSquare className="h-4 w-4" />,
-        onClick: () => console.log("Duplicate task", task._id)
-      }
+        icon: <CopyCheck className="h-4 w-4" />,
+        onClick: () => console.log("Duplicate task", task?._id)
+      },
+      {
+        label: "Delete",
+        icon: <Trash2 className="h-4 w-4" />,
+        onClick: () => console.log("Delete task", task?._id)
+      },
     ];
 
     return (
-      <Menu as="div" className="relative">
-        <Menu.Button className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-          <MoreVertical className="h-4 w-4" />
-        </Menu.Button>
-
-        <Transition
-          enter="transition duration-100 ease-out"
-          enterFrom="transform scale-95 opacity-0"
-          enterTo="transform scale-100 opacity-100"
-          leave="transition duration-75 ease-out"
-          leaveFrom="transform scale-100 opacity-100"
-          leaveTo="transform scale-95 opacity-0"
-        >
-          <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none">
-            <div className="px-1 py-1">
-              {menuItems.map((item) => (
-                <Menu.Item key={item.label}>
-                  {({ active }) => (
-                    <button
-                      onClick={item.onClick}
-                      className={`${
-                        active ? "bg-gray-100" : ""
-                      } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
-                    >
-                      <span className="mr-2 text-gray-400">{item.icon}</span>
-                      {item.label}
-                    </button>
-                  )}
-                </Menu.Item>
-              ))}
-            </div>
-          </Menu.Items>
-        </Transition>
-      </Menu>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          {menuItems.map((item) => (
+            <DropdownMenuItem
+              key={item.label}
+              onClick={item.onClick}
+              className="flex items-center gap-2"
+            >
+              <span className="text-muted-foreground">{item.icon}</span>
+              {item.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   };
 
@@ -154,9 +150,9 @@ const BoardView = ({ tasks = [] }) => {
               <div className="flex items-center justify-between">
                 <Badge variant="outline" className={PRIORITY_CONFIG[task.priority]?.badge}>
                   <div className="flex items-center gap-1.5">
-                    {PRIORITY_CONFIG[task.priority]?.icon && 
-                      React.createElement(PRIORITY_CONFIG[task.priority].icon, {
-                        className: `h-3.5 w-3.5 ${PRIORITY_CONFIG[task.priority].class}`
+                    {PRIORITY_CONFIG[task.priority]?.icon &&
+                      React.createElement(PRIORITY_CONFIG[task.priority]?.icon, {
+                        className: `h-3.5 w-3.5 ${PRIORITY_CONFIG[task.priority]?.class}`
                       })}
                     <span className="capitalize">{task.priority}</span>
                   </div>
@@ -184,7 +180,7 @@ const BoardView = ({ tasks = [] }) => {
                       {task.activities?.length || 0}
                     </Button>
                   </HoverCardTrigger>
-                  <HoverCardContent className="w-80">
+                  {task.activities?.length > 0 && <HoverCardContent className="w-80">
                     <div className="space-y-2">
                       {task.activities?.map((activity) => (
                         <div key={activity._id} className="flex items-start gap-2 text-sm">
@@ -199,7 +195,7 @@ const BoardView = ({ tasks = [] }) => {
                         </div>
                       ))}
                     </div>
-                  </HoverCardContent>
+                  </HoverCardContent>}
                 </HoverCard>
 
                 <HoverCard>
@@ -209,16 +205,13 @@ const BoardView = ({ tasks = [] }) => {
                       {task.assets?.length || 0}
                     </Button>
                   </HoverCardTrigger>
-                  <HoverCardContent className="w-80">
-                    <div className="space-y-2">
-                      {task.assets?.map((asset) => (
-                        <div key={asset._id} className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{asset.name}</span>
-                        </div>
+                  {task.assets?.length > 0 && <HoverCardContent className="w-80">
+                    <div className="grid grid-cols-2 gap-2">
+                      {task.assets?.map((asset, index) => (
+                        <img key={index} src={asset} alt={`Asset ${index + 1}`} className="w-full h-24 object-cover rounded-md"/>
                       ))}
                     </div>
-                  </HoverCardContent>
+                  </HoverCardContent>}
                 </HoverCard>
 
                 <HoverCard>
@@ -252,9 +245,6 @@ const BoardView = ({ tasks = [] }) => {
                       <span className="text-sm text-muted-foreground">
                         {formatDate(task.subTasks[0].date)}
                       </span>
-                      <Badge variant="secondary">
-                        {task.subTasks[0].tag}
-                      </Badge>
                     </div>
                   </div>
                 </div>
@@ -273,8 +263,8 @@ const BoardView = ({ tasks = [] }) => {
                       {task.team?.map((member) => (
                         <div key={member._id} className="flex items-center gap-2">
                           <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-blue-500 text-white">
-                              {member.name.slice(0, 2).toUpperCase()}
+                            <AvatarFallback>
+                              {getInitials(member.name)}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex flex-col">
@@ -296,22 +286,9 @@ const BoardView = ({ tasks = [] }) => {
         ))}
       </div>
 
-      <AlertDialog open={openDialog} onOpenChange={setOpenDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Task</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this task? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-red-500 hover:bg-red-600">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <AddTask open={openTaskDialog} setOpen={setOpenTaskDialog} task={selectedTask} />
+      <AddSubTask open={openSubTaskDialog} setOpen={setOpenSubTaskDialog} />
+
     </div>
   );
 };
