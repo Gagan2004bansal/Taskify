@@ -51,6 +51,8 @@ import {
   Users,
   Minus
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { getInitials } from '../../utils';
 
 const PRIORITY_CONFIG = {
   high: {
@@ -80,136 +82,24 @@ const STATUS_CONFIG = {
     color: "bg-slate-500",
     badge: "bg-slate-100 text-slate-700 border-slate-200"
   },
-  "in-progress": {
+  "in progress": {
     color: "bg-blue-500",
     badge: "bg-blue-100 text-blue-700 border-blue-200"
   },
   completed: {
     color: "bg-green-500",
     badge: "bg-green-100 text-green-700 border-green-200"
-  },
-  blocked: {
-    color: "bg-red-500",
-    badge: "bg-red-100 text-red-700 border-red-200"
   }
 };
 
 
-const formatDate = (date) => {
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }).format(new Date(date));
-};
 
-const TaskTeamPreview = ({ team }) => (
-  <HoverCard>
-    <HoverCardTrigger asChild>
-      <Button variant="ghost" size="sm" className="h-8">
-        <Users className="h-4 w-4 mr-2" />
-        {team?.length || 0} Members
-      </Button>
-    </HoverCardTrigger>
-    <HoverCardContent className="w-80">
-      <div className="space-y-2">
-        {team?.map((member) => (
-          <div key={member._id} className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-blue-500 text-white">
-                {member.name.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">{member.name}</span>
-              <span className="text-xs text-muted-foreground">{member.title}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </HoverCardContent>
-  </HoverCard>
-);
-
-const TaskAssets = ({ assets }) => (
-  <HoverCard>
-    <HoverCardTrigger asChild>
-      <Button variant="ghost" size="sm" className="h-8">
-        <Paperclip className="h-4 w-4 mr-2" />
-        {assets?.length || 0} Files
-      </Button>
-    </HoverCardTrigger>
-    <HoverCardContent className="w-80">
-      <div className="grid grid-cols-2 gap-2">
-        {assets?.map((asset, index) => (
-          <img 
-            key={index}
-            src={asset} 
-            alt={`Asset ${index + 1}`}
-            className="w-full h-24 object-cover rounded-md"
-          />
-        ))}
-      </div>
-    </HoverCardContent>
-  </HoverCard>
-);
-
-const SubTasksPreview = ({ subTasks }) => (
-  <HoverCard>
-    <HoverCardTrigger asChild>
-      <Button variant="ghost" size="sm" className="h-8">
-        <ListTodo className="h-4 w-4 mr-2" />
-        {subTasks?.length || 0} Subtasks
-      </Button>
-    </HoverCardTrigger>
-    <HoverCardContent className="w-80">
-      <div className="space-y-2">
-        {subTasks?.map((task) => (
-          <div key={task._id} className="flex items-center gap-2">
-            <Badge variant="outline">{task.tag}</Badge>
-            <span className="text-sm">{task.title}</span>
-          </div>
-        ))}
-      </div>
-    </HoverCardContent>
-  </HoverCard>
-);
-
-const ActivitiesPreview = ({ activities }) => (
-  <HoverCard>
-    <HoverCardTrigger asChild>
-      <Button variant="ghost" size="sm" className="h-8">
-        <MessageSquare className="h-4 w-4 mr-2" />
-        {activities?.length || 0} Activities
-      </Button>
-    </HoverCardTrigger>
-    <HoverCardContent className="w-80">
-      <div className="space-y-2">
-        <h4 className="text-sm font-semibold">Recent Activities</h4>
-        {activities?.map((activity) => (
-          <div key={activity._id} className="flex items-start gap-2 text-sm">
-            {activity.type === 'started' && <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />}
-            {activity.type === 'commented' && <MessageSquare className="h-4 w-4 mt-0.5 text-muted-foreground" />}
-            {activity.type === 'completed' && <ListTodo className="h-4 w-4 mt-0.5 text-muted-foreground" />}
-            <div>
-              <span className="font-medium">{activity.by.name}</span>
-              <span className="text-muted-foreground"> {activity.activity}</span>
-              <p className="text-xs text-muted-foreground">
-                {formatDate(activity?.date)} 
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </HoverCardContent>
-  </HoverCard>
-);
 
 const ListView = ({ tasks = [] }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+
+  const formatDate = (date) => format(new Date(date), "MMM d, hh:mm a");
 
   const handleDeleteClick = (task) => {
     setSelectedTask(task);
@@ -221,6 +111,109 @@ const ListView = ({ tasks = [] }) => {
     setOpenDialog(false);
     setSelectedTask(null);
   };
+
+
+  const TaskTeamPreview = ({ team }) => (
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8">
+          <Users className="h-4 w-4 mr-2" />
+          {team?.length || 0} Members
+        </Button>
+      </HoverCardTrigger>
+      <HoverCardContent className="w-80">
+        <div className="space-y-2">
+          {team?.map((member) => (
+            <div key={member._id} className="flex items-center gap-2">
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>
+                  {getInitials(member.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{member.name}</span>
+                <span className="text-xs text-muted-foreground">{member.title}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
+  
+  const TaskAssets = ({ assets }) => (
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8">
+          <Paperclip className="h-4 w-4 mr-2" />
+          {assets?.length || 0} Files
+        </Button>
+      </HoverCardTrigger>
+      <HoverCardContent className="w-80">
+        <div className="grid grid-cols-2 gap-2">
+          {assets?.map((asset, index) => (
+            <img 
+              key={index}
+              src={asset} 
+              alt={`Asset ${index + 1}`}
+              className="w-full h-24 object-cover rounded-md"
+            />
+          ))}
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
+  
+  const SubTasksPreview = ({ subTasks }) => (
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8">
+          <ListTodo className="h-4 w-4 mr-2" />
+          {subTasks?.length || 0} Subtasks
+        </Button>
+      </HoverCardTrigger>
+      <HoverCardContent className="w-80">
+        <div className="space-y-2">
+          {subTasks?.map((task) => (
+            <div key={task._id} className="flex items-center gap-2">
+              <Badge variant="outline">{task.tag}</Badge>
+              <span className="text-sm">{task.title}</span>
+            </div>
+          ))}
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
+  
+  const ActivitiesPreview = ({ activities }) => (
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-8">
+          <MessageSquare className="h-4 w-4 mr-2" />
+          {activities?.length || 0} Activities
+        </Button>
+      </HoverCardTrigger>
+      <HoverCardContent className="w-80">
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold">Recent Activities</h4>
+          {activities?.map((activity) => (
+            <div key={activity._id} className="flex items-start gap-2 text-sm">
+              {activity.type === 'started' && <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />}
+              {activity.type === 'commented' && <MessageSquare className="h-4 w-4 mt-0.5 text-muted-foreground" />}
+              {activity.type === 'completed' && <ListTodo className="h-4 w-4 mt-0.5 text-muted-foreground" />}
+              <div>
+                <span className="font-medium">{activity.by.name}</span>
+                <span className="text-muted-foreground"> {activity.activity}</span>
+                <p className="text-xs text-muted-foreground">
+                  {formatDate(activity?.date)} 
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -276,7 +269,7 @@ const ListView = ({ tasks = [] }) => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={PRIORITY_CONFIG[task.priority]?.badge || PRIORITY_CONFIG.normal.badge}>
+                        <Badge variant="outline" className={PRIORITY_CONFIG[task.priority]?.badge}>
                           <div className="flex items-center gap-1.5">
                             {PRIORITY_CONFIG[task.priority]?.icon && React.createElement(PRIORITY_CONFIG[task.priority].icon, {
                               className: `h-3.5 w-3.5 ${PRIORITY_CONFIG[task.priority].class}`
@@ -286,7 +279,7 @@ const ListView = ({ tasks = [] }) => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge className={`${STATUS_CONFIG[task.stage]?.badge || STATUS_CONFIG.todo.badge}`}>
+                        <Badge variant="outline" className={`${STATUS_CONFIG[task.stage]?.badge}`}>
                           {task.stage}
                         </Badge>
                       </TableCell>
@@ -298,11 +291,7 @@ const ListView = ({ tasks = [] }) => {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-                                >
+                                <Button variant="ghost" >
                                   <Pencil className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
@@ -315,12 +304,7 @@ const ListView = ({ tasks = [] }) => {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-                                  onClick={() => handleDeleteClick(task)}
-                                >
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50" onClick={() => handleDeleteClick(task)} >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
@@ -350,10 +334,7 @@ const ListView = ({ tasks = [] }) => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete}
-              className="bg-red-500 hover:bg-red-600"
-            >
+            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
