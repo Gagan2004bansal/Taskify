@@ -11,23 +11,30 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { User, Settings, Lock, LogOut } from "lucide-react";
 import { useSelector } from 'react-redux';
+import { toast } from 'sonner';
+import { useDispatch } from 'react-redux';
+import { logout } from '../redux/slices/authSlice';
+import { useLogoutMutation } from '../redux/slices/api/authApiSlice';
+import { useNavigate } from 'react-router-dom';
+import {getInitials} from '../utils/index';
 
 const UserAvatarMenu = () => {
     const {user} = useSelector((state) => state.auth);
-    console.log(user)
+    const [logoutUser] = useLogoutMutation();
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
-  const getInitials = (name) => {
-    return name
-      .split(' ')
-      .slice(0, 2)
-      .map(part => part?.[0])
-      .join('')
-      .toUpperCase();
-  };
-
-  const handleLogout = () => {
-    console.log('Logging out...');
-    // Add your logout logic here
+  const handleLogout = async () => {
+    try{
+      await logoutUser().unwrap();
+      dispatch(logout());
+      navigate("/");
+      toast.success("Logged out successfully");
+    }
+    catch(error){
+      toast.error("Logout failed");
+      console.log(error)
+    }
   };
 
   return (

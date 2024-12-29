@@ -1,17 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { useLoginMutation } from '../redux/slices/api/authApiSlice';
+import { toast } from 'sonner';
+import { setCredentials } from '../redux/slices/authSlice';
+
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState({
+    email: '',
+    password: ''
+  });
+  const navigate = useNavigate();
+  const [login, { isLoading }] = useLoginMutation();
+  const dispatch = useDispatch();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,25 +36,31 @@ const Login = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const newErrors = {};
     
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email";
+    if (!formData.email.trim()) {
+      return setErrors(prev => ({ ...prev, email: 'Email is required' }));
     }
-    if (!formData.password) {
-      newErrors.password = "Password is required";
+    if (!formData.password.trim()) {
+      return setErrors(prev => ({ ...prev, password: 'Password is required' }));
     }
 
-    if (Object.keys(newErrors).length === 0) {
-      console.log('Form submitted:', formData);
-    } else {
-      setErrors(newErrors);
+    try{
+
+      const res = await login(formData).unwrap();
+      dispatch(setCredentials(res));
+      console.log(res);
+      toast.success("Logged in successfully");
+      navigate("/dashboard");
+      
+    }
+    catch(error){
+      console.log(error);
+      toast.error(error?.data?.message || error.error);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-600 flex items-center justify-center p-4">
@@ -52,16 +70,14 @@ const Login = () => {
       <div className="container relative z-10 max-w-6xl flex flex-col lg:flex-row items-center gap-12">
         {/* Left Side - Branding */}
         <div className="lg:w-1/2 space-y-8 text-center lg:text-left">
-          <div className="inline-block px-4 py-1.5 rounded-full border border-zinc-700/50 
-            bg-zinc-800/50 backdrop-blur-sm">
+          <div className="inline-block px-4 py-1.5 rounded-full border border-zinc-700/50 bg-zinc-800/50 backdrop-blur-sm">
             <span className="bg-gradient-to-r from-zinc-200 to-zinc-400 bg-clip-text text-transparent">
               Manage all your tasks in one place
             </span>
           </div>
           
           <div className="space-y-4">
-            <h1 className="text-5xl lg:text-7xl font-bold text-transparent bg-clip-text 
-              bg-gradient-to-r from-zinc-200 via-zinc-50 to-zinc-900">
+            <h1 className="text-5xl lg:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-zinc-200 via-zinc-50 to-zinc-900">
               Cloud-Based
               <br />
               Task Manager
@@ -109,16 +125,7 @@ const Login = () => {
                   <Label htmlFor="password" className="text-zinc-200">
                     Password
                   </Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="bg-zinc-800/50 border-zinc-700 text-zinc-200 
-                      placeholder:text-zinc-500 focus:ring-zinc-500"
-                  />
+                  <Input id="password" name="password" type="password" placeholder="Enter your password" value={formData.password} onChange={handleChange} className="bg-zinc-800/50 border-zinc-700 text-zinc-200 placeholder:text-zinc-500 focus:ring-zinc-500"/>
                   {errors.password && (
                     <p className="text-red-400 text-sm">{errors.password}</p>
                   )}
@@ -136,12 +143,12 @@ const Login = () => {
                   </Button>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-gradient-to-r from-zinc-200 to-zinc-400 
-                    hover:from-white hover:to-zinc-300 text-zinc-900"
-                >
-                  Sign In
+                <Button type="submit" className="w-full bg-gradient-to-r from-zinc-200 to-zinc-400 hover:from-white hover:to-zinc-300 text-zinc-900">
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    "Sign In"
+                  )}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </form>
