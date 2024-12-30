@@ -25,7 +25,6 @@ export default function Navbar () {
                 <NotificationPanel />
 
                 <UserAvatar/>
-
             </div>
 
         </div>

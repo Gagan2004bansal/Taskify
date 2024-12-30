@@ -1,80 +1,107 @@
 import React, { useState } from "react";
-import { Calendar, ListTodo, Tag, Image as ImageIcon, Plus, X } from "lucide-react";
+import { ListTodo, Image as ImageIcon, X } from "lucide-react";
 import UserList from "./UserList";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
+import { useCreateTaskMutation, useUpdateTaskMutation } from "../../redux/slices/api/taskApiSlice";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
+import { toast } from 'react-toastify'; 
+import 'react-toastify/dist/ReactToastify.css'; 
 
 const LISTS = ["TODO", "IN PROGRESS", "COMPLETED"];
 const PRIORITY = ["HIGH", "MEDIUM", "NORMAL", "LOW"];
 
 const AddTask = ({ open, setOpen, task = null }) => {
-  console.log(task);
   const [formData, setFormData] = useState({
     title: task?.title || "",
-    date: task?.date || new Date().toISOString().split('T')[0],
+    date: task?.date || new Date().toISOString().split("T")[0],
     stage: task?.stage?.toUpperCase() || LISTS[0],
     priority: task?.priority?.toUpperCase() || PRIORITY[2],
   });
 
+  const [createTask, { isLoading }] = useCreateTaskMutation();
+  const [updateTask, { isLoading: isUpdating }] = useUpdateTaskMutation();
   const [team, setTeam] = useState(task?.team || []);
-  const [assets, setAssets] = useState(task?.assets || []);
+  const [assets, setAssets] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [previewAssets, setPreviewAssets] = useState([]);
+  const URLS = task?.assets ? [...task.assets] : [];
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setUploading(true);
+  const uploadFile = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'CloudStore'); 
+
     try {
-      // Your submit logic here
-      console.log({ ...formData, team, assets });
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/dz5ezyudo/image/upload`, 
+        formData,
+        {
+          method: 'POST',
+        }
+      );
+      return response.data.secure_url; 
     } catch (error) {
-      console.error(error);
-    } finally {
-      setUploading(false);
+      console.error('Error uploading file to Cloudinary:', error);
+      throw error; 
     }
   };
 
   const handleSelect = (e) => {
     const files = Array.from(e.target.files);
     setAssets(files);
-    
-    // Create preview URLs
-    const previews = files.map(file => ({
+
+    const previews = files.map((file) => ({
       name: file.name,
-      url: URL.createObjectURL(file)
+      url: URL.createObjectURL(file),
     }));
     setPreviewAssets(previews);
   };
 
   const removeAsset = (index) => {
-    const newAssets = [...assets];
-    newAssets.splice(index, 1);
-    setAssets(newAssets);
+    const updatedAssets = [...assets];
+    updatedAssets.splice(index, 1);
+    setAssets(updatedAssets);
 
-    const newPreviews = [...previewAssets];
-    URL.revokeObjectURL(newPreviews[index].url);
-    newPreviews.splice(index, 1);
-    setPreviewAssets(newPreviews);
+    const updatedPreviews = [...previewAssets];
+    URL.revokeObjectURL(updatedPreviews[index].url);
+    updatedPreviews.splice(index, 1);
+    setPreviewAssets(updatedPreviews);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      setUploading(true);
+
+      const uploadFileURLs = await Promise.all(assets.map((file) => uploadFile(file)));
+
+      const newData = {
+        ...formData,
+        assets: [...URLS, ...uploadFileURLs],
+        team,
+      };
+
+      const response = task?._id
+        ? await updateTask({ ...newData, _id: task._id }).unwrap()
+        : await createTask(newData).unwrap();
+
+      toast.success(response.message);
+      setTimeout(() => {
+        setOpen(false);
+      }, 500);
+    } catch (error) {
+      console.error("Error handling submission:", error);
+      toast.error(error?.data?.message || error.message); 
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -94,7 +121,7 @@ const AddTask = ({ open, setOpen, task = null }) => {
               <Input
                 placeholder="Enter task title"
                 value={formData.title}
-                onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                 className="mt-1.5"
               />
             </div>
@@ -110,7 +137,7 @@ const AddTask = ({ open, setOpen, task = null }) => {
                 <Label>Task Status</Label>
                 <Select
                   value={formData.stage}
-                  onValueChange={(stage) => setFormData(prev => ({ ...prev, stage }))}
+                  onValueChange={(stage) => setFormData((prev) => ({ ...prev, stage }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
@@ -130,7 +157,7 @@ const AddTask = ({ open, setOpen, task = null }) => {
                 <Input
                   type="date"
                   value={formData.date}
-                  onChange={e => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
                 />
               </div>
             </div>
@@ -140,7 +167,7 @@ const AddTask = ({ open, setOpen, task = null }) => {
                 <Label>Priority Level</Label>
                 <Select
                   value={formData.priority}
-                  onValueChange={(priority) => setFormData(prev => ({ ...prev, priority }))}
+                  onValueChange={(priority) => setFormData((prev) => ({ ...prev, priority }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select priority" />
@@ -212,11 +239,15 @@ const AddTask = ({ open, setOpen, task = null }) => {
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
+              className="mr-2"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={uploading}>
-              {uploading ? "Saving..." : (task ? "Update Task" : "Create Task")}
+            <Button
+              type="submit"
+              disabled={isLoading || isUpdating || uploading}
+            >
+              {isLoading || isUpdating || uploading ? "Submitting..." : task ? "Update Task" : "Create Task"}
             </Button>
           </DialogFooter>
         </form>

@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LayoutGrid, List, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useGetAllTaskQuery } from "../redux/slices/api/taskApiSlice";
 
 const TASK_TYPES = {
   todo: {
@@ -33,14 +34,20 @@ const TASK_TYPES = {
 const Tasks = () => {
   const params = useParams();
 
-  const [loading, setLoading] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [view, setView] = useState("board");
-
   const status = params?.status || "";
   const title = status ? `${status} Tasks` : "Tasks";
 
-  if (loading) return (
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [view, setView] = useState("board");
+
+  const {data, isLoading} = useGetAllTaskQuery({
+    strQuery: status,
+    isTrashed: "",
+    search: ""
+  });
+
+
+  if (isLoading) return (
     <div className="w-full space-y-4">
       <Skeleton className="h-12 w-full" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -103,10 +110,10 @@ const Tasks = () => {
         </div>
 
         <TabsContent value="board">
-          <BoardView tasks={tasks} />
+          <BoardView tasks={data?.tasks} />
         </TabsContent>
         <TabsContent value="list">
-          <ListView tasks={tasks} />
+          <ListView tasks={data?.tasks} />
         </TabsContent>
 
       </Tabs>

@@ -1,29 +1,15 @@
 import React from 'react';
 import moment from "moment";
-import {
-    ResponsiveContainer,
-    AreaChart,
-    Area,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-} from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import {
-    Clock,
-    CheckCircle,
-    Users,
-    TrendingUp,
-    Layers,
-    Star
-} from 'lucide-react';
-import { summary, chartData, activitiesData } from '../assets/data';
+import { Clock, CheckCircle, Users, TrendingUp, Layers, Star } from 'lucide-react';
+import { activitiesData } from '../assets/data';
 import { getInitials, TASK_TYPE } from '../utils/index';
 import { useSelector } from 'react-redux';
+import { useGetDashboardStatsQuery } from '../redux/slices/api/taskApiSlice';
 
 
 
@@ -96,19 +82,21 @@ const TaskCard = ({ task }) => (
 
 const Dashboard = () => {
 
+    const { data } = useGetDashboardStatsQuery();
+
     const { user } = useSelector((state) => state.auth);
 
     const stats = [
-        { icon: Layers, label: 'Total Tasks', value: summary.totalTasks, trend: 12, color: 'bg-blue-500' },
-        { icon: CheckCircle, label: 'Completed', value: summary.tasks.completed, trend: 8, color: 'bg-green-500' },
-        { icon: Clock, label: 'In Progress', value: summary.tasks['in progress'], trend: -5, color: 'bg-amber-500' },
-        { icon: Users, label: 'Team Members', value: summary.users.length, color: 'bg-purple-500' }
+        { icon: Layers, label: 'Total Tasks', value: data?.totalTasks || 0, trend: 12, color: 'bg-blue-500' },
+        { icon: CheckCircle, label: 'Completed', value: data?.tasks.completed || 0, trend: 8, color: 'bg-green-500' },
+        { icon: Clock, label: 'In Progress', value: data?.tasks['in progress'] || 0, trend: -5, color: 'bg-amber-500' },
+        { icon: Users, label: 'Team Members', value: data?.users.length || 0, color: 'bg-purple-500' }
     ];
 
     const pieData = [
-        { name: 'Todo', value: summary.tasks.todo },
-        { name: 'In Progress', value: summary.tasks['in progress'] },
-        { name: 'Completed', value: summary.tasks.completed }
+        { name: 'Todo', value: data?.tasks.todo || 0 },
+        { name: 'In Progress', value: data?.tasks['in progress'] || 0 },
+        { name: 'Completed', value: data?.tasks.completed || 0 }
     ];
 
     return (
@@ -139,7 +127,7 @@ const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={chartData}>
+                            <AreaChart data={data?.graphData}>
                                 <defs>
                                     <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
@@ -194,14 +182,14 @@ const Dashboard = () => {
                                 <CardDescription>Latest updates from your team</CardDescription>
                             </div>
                             <Badge variant="outline" className="ml-auto">
-                                {summary.last10Task.length} tasks
+                                {data?.last10Task.length} tasks
                             </Badge>
                         </div>
                     </CardHeader>
                     <CardContent>
                         <ScrollArea className="h-[400px] pr-4">
                             <div className="space-y-4">
-                                {summary.last10Task?.map((task, index) => (
+                                {data?.last10Task?.map((task, index) => (
                                     <TaskCard key={index} task={task} />
                                 ))}
                             </div>
@@ -217,7 +205,7 @@ const Dashboard = () => {
                     <CardContent>
                         <ScrollArea className="h-[400px]">
                             <div className="space-y-4">
-                                {summary.users?.map((user, index) => (
+                                {data?.users?.map((user, index) => (
                                     <div key={index}
                                         className="flex items-center gap-4 p-4 hover:bg-muted/50 rounded-lg transition-colors">
                                         <Avatar className="h-10 w-10">
