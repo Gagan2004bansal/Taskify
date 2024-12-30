@@ -8,7 +8,6 @@ export const createTask = async(req, res) => {
         const {userId} = req.user;
         const { title, team, stage, date, priority, assets } = req.body;
         
-
         const task = await Task.create({
             title, 
             team,
@@ -128,15 +127,12 @@ export const postTaskActivity = async(req, res) => {
 }
 
 export const dashboardStatistics = async(req, res) => {
-    try {
-        
+    try {       
         const {userId, isAdmin} = req.user;
         const allTasks = isAdmin ? await Task.find({isTrashed: false}).populate({path: "team", select: "name role title email"}).sort({ _id: -1}) : await Task.find({isTrashed: false, team: {$all: [userId]}}).populate({path: "team", select: "name role title email"}).sort({ _id: -1});
 
-
         const users = await User.find({isActive: true}).select("name title role isAdmin createdAt").limit(10).sort({ _id: -1});
 
-        // group tasks
         const groupTasks = allTasks.reduce((result, task) => {
             const stage = task.stage;
 
@@ -217,14 +213,12 @@ export const getTasks = async(req, res) => {
 
 export const getTask = async(req, res) => {
     try {
-
         const {id} = req.params;
         const task = await Task.findById(id).populate({
             path: "team",
             select: "name title role email",
         }).populate({path: "activities.by", select: "name"}).sort({ _id : -1});
         
-
         res.status(200).json({
             status: true,
             task,
@@ -271,7 +265,6 @@ export const createSubTask = async(req, res) => {
 
 export const updateTask = async(req, res) => {
     try {
-        
         const {id} = req.params;
         const {title, date, team, stage, priority, assets} = req.body;
 
@@ -326,7 +319,6 @@ export const trashTask = async(req, res) => {
 
 export const deleteRestoreTask = async(req, res) => {
     try {
-        
         const {id} = req.params;
         const {actionType} = req.query;
 

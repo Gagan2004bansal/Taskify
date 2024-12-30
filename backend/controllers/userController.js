@@ -1,12 +1,11 @@
 import User from "../models/user.js";
 import { createJWT } from "../utils/index.js";
 import Notice from "../models/notification.js"
+import bcrypt from "bcryptjs";
 
 export const registerUser = async(req, res) => {
     try {
-        
         const {name, email, password, isAdmin, role, title} = req.body;
-
         const userExit = await User.findOne({email});
 
         if(userExit){
@@ -16,8 +15,10 @@ export const registerUser = async(req, res) => {
             });
         }
 
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const user = await User.create({
-            name, email, password, isAdmin, role, title
+            name, email, password: hashedPassword, isAdmin, role, title
         });
 
         if(user){
@@ -27,7 +28,7 @@ export const registerUser = async(req, res) => {
             res.status(201).json({
                 success: true,
                 message: "User registered successfully",
-                user
+                user,
             });
         }
         else{
@@ -49,9 +50,7 @@ export const registerUser = async(req, res) => {
 
 export const loginUser = async(req, res) => {
     try {
-        
         const {email, password} = req.body;
-
         const user = await User.findOne({email});
 
         if(!user){
@@ -68,13 +67,11 @@ export const loginUser = async(req, res) => {
             });
         }
 
-        const isMatch = await user.matchPassword(password);
+        const isMatch =  await bcrypt.compare(password, user.password);
 
         if(user && isMatch){
             createJWT(res, user._id);
-
             user.password = undefined;
-
             res.status(200).json(user)
         }
         else{
@@ -94,7 +91,6 @@ export const loginUser = async(req, res) => {
 
 export const logoutUser = async(req, res) => {
     try {
-
         res.cookie("token", "", {
             httpOnly: true,
             expires: new Date(0),
@@ -103,7 +99,6 @@ export const logoutUser = async(req, res) => {
         res.status(200).json({
             message: "Logout successfully",
         });
-        
     } catch (error) {
         return res.status(400).json({
             status: false,
@@ -114,11 +109,8 @@ export const logoutUser = async(req, res) => {
 
 export const getTeamList = async(req, res) => {
     try {
-        
         const users = await User.find().select("name title role email isActive");
-
         res.status(200).json(users);
-
     } catch (error) {
         return res.status(400).json({
             status: false,
@@ -128,8 +120,7 @@ export const getTeamList = async(req, res) => {
 }
 
 export const getNotificationList = async(req, res) => {
-    try {
-        
+    try {      
         const {userId} = req.user;
 
         const notice = await Notice.findOne({
@@ -150,7 +141,7 @@ export const getNotificationList = async(req, res) => {
 export const updateUserProfile = async(req, res) => {
     try {
             
-        const {userId, isAdmin} = req.user;
+        const {userId} = req.user;
         const {_id} = req.body;
         const id = userId;
 
@@ -223,12 +214,11 @@ export const markNotificationRead = async(req, res) => {
 
 export const changeUserPassword = async(req, res) => {
     try {
-            
         const {userId} = req.user;
-
         const user = await User.findById(userId);
 
         if(user){
+
             user.password = req.body.password;
 
             await user.save();
@@ -237,6 +227,7 @@ export const changeUserPassword = async(req, res) => {
                 status: true,
                 message: `password changed successfully`,
             });
+
         }
         else{
             res.status(404).json({
@@ -259,6 +250,7 @@ export const activateUserProfile = async(req, res) => {
         const {id} = req.params;
         const user = await User.findById(id);
         if(user) {
+
             user.isActive = req.body.isActive;
 
             await user.save();
@@ -267,19 +259,24 @@ export const activateUserProfile = async(req, res) => {
                 status: true,
                 message: `User account has been ${user?.isActive ? "activated" : "disabled"}`,
             });
+
         }
         else{
+
             res.status(404).json({
                 status: false,
                 message: "User not found",
             });
+
         }
 
     } catch (error) {
+
         return res.status(400).json({
             status: false,
             message: error.message,
         });
+
     }
 }
 
