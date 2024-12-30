@@ -10,16 +10,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useUpdateUserMutation, useRegisterMutation } from "../../redux/slices/api/userApiSlice";
+import { toast } from "sonner";
+import { useDispatch, useSelector } from "react-redux";
+import { setCredentials } from "../../redux/slices/authSlice";
 
 const User = ({ user, onSubmit, onCancel }) => {
-  const [formData, setFormData] = useState({
-    name: user?.name || "",
-    title: user?.title || "",
-    email: user?.email || "",
-    role: user?.role || "",
+  const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
+  const [addNewUser, { isLoading }] = useRegisterMutation();
+  const [formData, setFormData] = useState(user ? { ...user } : {
+    name: '',
+    title: '',
+    email: '',
+    role: ''
   });
-
   const [errors, setErrors] = useState({});
+  const dispatch = useDispatch();
+  const { user: presentUser } = useSelector((state) => state.auth);
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -40,12 +47,31 @@ const User = ({ user, onSubmit, onCancel }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validate()) {
-      onSubmit(formData);
+    try {
+      if (validate()) {
+        const res = user
+          ? await updateUser(formData).unwrap()
+          : await addNewUser({ ...formData, password: formData.email }).unwrap();
+
+        if (res.user._id === presentUser._id) {
+          dispatch(setCredentials(res.user));
+        }
+
+        toast.success(res.message);
+        onSubmit(formData);
+      }
     }
+    catch (error) {
+      console.log(error);
+      toast.error(`${user ? "Updated User" : "Adding New User"} failed`);
+    }
+
   };
+
+
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -74,7 +100,7 @@ const User = ({ user, onSubmit, onCancel }) => {
       </div>
 
       <DialogFooter>
-        <Button variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit">

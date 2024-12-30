@@ -24,7 +24,11 @@ export const registerUser = async(req, res) => {
             isAdmin ? createJWT(res, user._id) : null;
             user.password = undefined;
 
-            res.status(201).json(user);
+            res.status(201).json({
+                success: true,
+                message: "User registered successfully",
+                user
+            });
         }
         else{
             return res.status(400).json({
@@ -113,7 +117,7 @@ export const getTeamList = async(req, res) => {
         
         const users = await User.find().select("name title role email isActive");
 
-        res.status(200).json(user);
+        res.status(200).json(users);
 
     } catch (error) {
         return res.status(400).json({
@@ -148,8 +152,7 @@ export const updateUserProfile = async(req, res) => {
             
         const {userId, isAdmin} = req.user;
         const {_id} = req.body;
-
-        const id = isAdmin&& userId === _id ? userId : isAdmin  && userId !== _id ? _id : userId;
+        const id = userId;
 
         const user = await User.findById(id);
 
@@ -158,7 +161,7 @@ export const updateUserProfile = async(req, res) => {
             user.title = req.body.title || user.title;
             user.role = req.body.role || user.role;
             
-            const updateUser = await User.save();
+            const updateUser = await user.save();
             user.password = undefined;
 
             res.status(201).json({

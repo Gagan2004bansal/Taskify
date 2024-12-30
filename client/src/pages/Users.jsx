@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Card,
   CardContent,
@@ -35,9 +35,11 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2 } from 'lucide-react';
-import { summary } from '../assets/data';
 import UserForm from '../components/users/UserForm';
 import { getInitials } from '../utils';
+import { useDeleteUserMutation, useGetTeamListQuery, useUserActionMutation } from '../redux/slices/api/userApiSlice';
+import LoadingState from '../components/users/LoadingState';
+import { toast } from 'sonner';
 
 const ROLE_COLORS = {
   Administrator: "bg-red-100 text-red-700",
@@ -48,12 +50,25 @@ const ROLE_COLORS = {
 };
 
 const TeamMembers = () => {
-  const [users, setUsers] = useState(summary.users);
-
   const [dialogOpen, setDialogOpen] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const {data, isLoading}  = useGetTeamListQuery();
+  const [users, setUsers] = useState([]);
+  const [deleteUser ] = useDeleteUserMutation();
+  const [userAction ] = useUserActionMutation();
+
+  useEffect(() => {
+    if (data && Array.isArray(data)) {
+      setUsers(data);
+    }
+  }, [data]); 
+
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
 
   const handleAddEdit = (data) => {
     if (selectedUser) {
@@ -67,20 +82,36 @@ const TeamMembers = () => {
     setSelectedUser(null);
   };
 
-  const handleDelete = (id) => {
-    setUsers(users.filter(user => user._id !== id));
-    setAlertOpen(false);
+  const handleDelete = async (id) => {
+    try{
+      await deleteUser(id);
+      setUsers(users.filter(user => user._id !== id));
+      setAlertOpen(false);
+      toast.success("User deleted successfully");
+    }
+    catch(error){
+      console.log(error);
+      toast.error(error?.data?.message || error.error);
+    }
   };
 
-  const handleStatusChange = (user) => {
-    setUsers(users.map(u => 
-      u._id === user._id ? { ...u, isActive: !u.isActive } : u
-    ));
-    setStatusDialogOpen(false);
-    setSelectedUser(null);
+  const handleStatusChange = async (user) => {
+    try{
+      console.log(user);
+      await userAction({ id: user._id, isActive: !user.isActive });
+      setUsers(users.map(u => 
+        u._id === user._id ? { ...u, isActive: !u.isActive } : u
+      ));
+      toast.success(`User ${user.isActive ?  "disabled" : "activated"} successfully`);
+    }
+    catch(error){
+      toast.error(error?.data?.message || error.error);
+    }
+    finally{
+      setStatusDialogOpen(false);
+      setSelectedUser(null);
+    }
   };
-
-  console.log(selectedUser);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
