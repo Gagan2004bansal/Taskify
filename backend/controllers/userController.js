@@ -212,38 +212,46 @@ export const markNotificationRead = async(req, res) => {
     }
 }
 
-export const changeUserPassword = async(req, res) => {
+export const changeUserPassword = async (req, res) => {
     try {
-        const {userId} = req.user;
+        const { userId } = req.user;
         const user = await User.findById(userId);
 
-        if(user){
+        const { currentPassword, newPassword } = req.body;
+        console.log(currentPassword, newPassword);
 
-            user.password = req.body.password;
-
-            await user.save();
-
-            res.status(201).json({
-                status: true,
-                message: `password changed successfully`,
-            });
-
-        }
-        else{
-            res.status(404).json({
+        if (!user) {
+            return res.status(404).json({
                 success: false,
                 message: "User not found",
             });
         }
 
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({
+                status: false,
+                message: "Current password is incorrect",
+            });
+        }
 
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+
+        await user.save();
+
+        res.status(201).json({
+            status: true,
+            message: `Password Changed Successfully`,
+        });
     } catch (error) {
         return res.status(400).json({
             status: false,
             message: error.message,
         });
     }
-}
+};
+
 
 export const activateUserProfile = async(req, res) => {
     try {
