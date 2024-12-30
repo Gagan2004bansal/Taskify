@@ -2,27 +2,27 @@ import Task from "../models/task.js";
 import Notice from "../models/notification.js";
 import User from "../models/user.js";
 
-export const createTask = async(req, res) => {
+export const createTask = async (req, res) => {
     try {
 
-        const {userId} = req.user;
+        const { userId } = req.user;
         const { title, team, stage, date, priority, assets } = req.body;
-        
+
         const task = await Task.create({
-            title, 
+            title,
             team,
-            stage: stage.toLowerCase(), 
+            stage: stage.toLowerCase(),
             date,
             priority: priority.toLowerCase(),
             assets
-        }); 
-        
+        });
+
         let text = "New task has been assigned to you";
-        if(task.team.length > 1){
-            text = text + ` and ${task.team.length-1} others`;
+        if (task.team.length > 1) {
+            text = text + ` and ${task.team.length - 1} others`;
         }
 
-        text = text + ` The task priority is set a ${task.priority} priority, so check and act accordingly. The Task date is ${task.date.toDateString()}. Thank you !!!`;        
+        text = text + ` The task priority is set a ${task.priority} priority, so check and act accordingly. The Task date is ${task.date.toDateString()}. Thank you !!!`;
 
         const activity = {
             type: "assigned",
@@ -49,17 +49,17 @@ export const createTask = async(req, res) => {
     }
 }
 
-export const duplicateTask = async(req, res) => {
+export const duplicateTask = async (req, res) => {
     try {
-        
-        const {id} = req.params;
+
+        const { id } = req.params;
         const task = await Task.findById(id);
 
         const newTask = await Task.create({
             ...task, title: task.title + " - Duplicate",
         });
 
-        newTask.team =  task.team;
+        newTask.team = task.team;
         newTask.subTask = task.subTask;
         newTask.assets = task.assets;
         newTask.priority = task.priority;
@@ -68,21 +68,21 @@ export const duplicateTask = async(req, res) => {
         await newTask.save();
 
         let text = "New task has been assigned to you";
-        if(task.team.length > 1){
-            text = text + ` and ${task.team.length-1} others`;
+        if (task.team.length > 1) {
+            text = text + ` and ${task.team.length - 1} others`;
         }
 
-        text = text + ` The task priority is set a ${task.priority} priority, so check and act accordingly. The Task date is ${task.date.toDateString()}. Thank you !!!`;        
+        text = text + ` The task priority is set a ${task.priority} priority, so check and act accordingly. The Task date is ${task.date.toDateString()}. Thank you !!!`;
 
         await Notice.create({
-            team, text, task: newTask._id,
+            team: task.team, text, task: newTask._id,
         });
 
         res.status(200).json({
             status: true,
             message: "Task created successfully",
         });
-        
+
     } catch (error) {
         console.log(error);
         return res.status(400).json({
@@ -93,14 +93,14 @@ export const duplicateTask = async(req, res) => {
 }
 
 
-export const postTaskActivity = async(req, res) => {
+export const postTaskActivity = async (req, res) => {
     try {
-        
-        const {id} = req.params;
+
+        const { id } = req.params;
         const { userId } = req.user;
         const { type, activity } = req.body;
 
-        const task =  await Task.findById(id);
+        const task = await Task.findById(id);
 
         const data = {
             type,
@@ -126,20 +126,20 @@ export const postTaskActivity = async(req, res) => {
     }
 }
 
-export const dashboardStatistics = async(req, res) => {
-    try {       
-        const {userId, isAdmin} = req.user;
-        const allTasks = isAdmin ? await Task.find({isTrashed: false}).populate({path: "team", select: "name role title email"}).sort({ _id: -1}) : await Task.find({isTrashed: false, team: {$all: [userId]}}).populate({path: "team", select: "name role title email"}).sort({ _id: -1});
+export const dashboardStatistics = async (req, res) => {
+    try {
+        const { userId, isAdmin } = req.user;
+        const allTasks = isAdmin ? await Task.find({ isTrashed: false }).populate({ path: "team", select: "name role title email" }).sort({ _id: -1 }) : await Task.find({ isTrashed: false, team: { $all: [userId] } }).populate({ path: "team", select: "name role title email" }).sort({ _id: -1 });
 
-        const users = await User.find({isActive: true}).select("name title role isAdmin createdAt").limit(10).sort({ _id: -1});
+        const users = await User.find({ isActive: true }).select("name title role isAdmin createdAt").limit(10).sort({ _id: -1 });
 
         const groupTasks = allTasks.reduce((result, task) => {
             const stage = task.stage;
 
-            if(!result[stage]){
+            if (!result[stage]) {
                 result[stage] = 1;
             }
-            else{
+            else {
                 result[stage] += 1;
             }
 
@@ -148,12 +148,12 @@ export const dashboardStatistics = async(req, res) => {
 
         const groupData = Object.entries(
             allTasks.reduce((result, task) => {
-                const {priority} =  task;
-                result[priority] = (result[priority] || 0 ) + 1;
-                
+                const { priority } = task;
+                result[priority] = (result[priority] || 0) + 1;
+
                 return result;
             }, {})
-        ).map(([name, total]) => ({name, total}));
+        ).map(([name, total]) => ({ name, total }));
 
         const totalTasks = allTasks.length;
         const last10Task = allTasks?.slice(0, 10);
@@ -181,20 +181,20 @@ export const dashboardStatistics = async(req, res) => {
     }
 }
 
-export const getTasks = async(req, res) => {
+export const getTasks = async (req, res) => {
     try {
-        
-        const {stage, isTrashed} = req.params;
-        let query = {isTrashed: isTrashed ? true : false};
-        if(stage){
+
+        const { stage, isTrashed } = req.params;
+        let query = { isTrashed: isTrashed ? true : false };
+        if (stage) {
             query.stage = stage;
         }
 
         let queryResult = Task.find(query).populate({
             path: "team",
             select: "name title email",
-        }).sort({ _id: -1});
-        
+        }).sort({ _id: -1 });
+
         const tasks = await queryResult;
 
         res.status(200).json({
@@ -211,14 +211,14 @@ export const getTasks = async(req, res) => {
     }
 }
 
-export const getTask = async(req, res) => {
+export const getTask = async (req, res) => {
     try {
-        const {id} = req.params;
+        const { id } = req.params;
         const task = await Task.findById(id).populate({
             path: "team",
             select: "name title role email",
-        }).populate({path: "activities.by", select: "name"}).sort({ _id : -1});
-        
+        }).populate({ path: "activities.by", select: "name" }).sort({ _id: -1 });
+
         res.status(200).json({
             status: true,
             task,
@@ -232,11 +232,11 @@ export const getTask = async(req, res) => {
     }
 }
 
-export const createSubTask = async(req, res) => {
+export const createSubTask = async (req, res) => {
     try {
 
-        const {title, tag, date} = req.body;
-        const {id} = req.params;
+        const { title, tag, date } = req.body;
+        const { id } = req.params;
 
         const newsubTask = {
             title,
@@ -244,16 +244,16 @@ export const createSubTask = async(req, res) => {
             tag
         };
 
-        const task =  await Task.findById(id);
+        const task = await Task.findById(id);
         task.subTask.push(newsubTask);
 
-        await  task.save();
+        await task.save();
 
         res.status(200).json({
             success: true,
             message: "Subtask added successfully",
         });
-        
+
     } catch (error) {
         console.log(error);
         return res.status(400).json({
@@ -263,10 +263,10 @@ export const createSubTask = async(req, res) => {
     }
 }
 
-export const updateTask = async(req, res) => {
+export const updateTask = async (req, res) => {
     try {
-        const {id} = req.params;
-        const {title, date, team, stage, priority, assets} = req.body;
+        const { id } = req.params;
+        const { title, date, team, stage, priority, assets } = req.body;
 
         const task = await Task.findById(id);
 
@@ -280,7 +280,7 @@ export const updateTask = async(req, res) => {
         await task.save();
 
         res.status(200).json({
-            success: true, 
+            success: true,
             message: "Task updated successfully",
         });
 
@@ -294,9 +294,9 @@ export const updateTask = async(req, res) => {
     }
 }
 
-export const trashTask = async(req, res) => {
+export const trashTask = async (req, res) => {
     try {
-        const {id} = req.params;
+        const { id } = req.params;
         const task = await Task.findById(id);
 
         task.isTrashed = true;
@@ -317,24 +317,24 @@ export const trashTask = async(req, res) => {
     }
 }
 
-export const deleteRestoreTask = async(req, res) => {
+export const deleteRestoreTask = async (req, res) => {
     try {
-        const {id} = req.params;
-        const {actionType} = req.query;
+        const { id } = req.params;
+        const { actionType } = req.query;
 
-        if(actionType === "delete"){
+        if (actionType === "delete") {
             await Task.findByIdAndDelete(id);
         }
-        else if(actionType === "deleteAll"){
-            await Task.deleteMany({isTrashed: true});
+        else if (actionType === "deleteAll") {
+            await Task.deleteMany({ isTrashed: true });
         }
-        else if(actionType === "restore"){
+        else if (actionType === "restore") {
             const resp = await Task.findById(id);
             resp.isTrashed = false;
             resp.save();
         }
-        else if(actionType === "restoreAll"){
-            await Task.updateMany({isTrashed: true}, {$set: {isTrashed: false}});
+        else if (actionType === "restoreAll") {
+            await Task.updateMany({ isTrashed: true }, { $set: { isTrashed: false } });
         }
 
         res.status(200).json({

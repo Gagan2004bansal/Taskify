@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import BoardView from "../components/BoardView";
-import { tasks } from "../assets/data";
 import ListView from "../components/task/ListView";
 import AddTask from "../components/task/AddTask";
 
@@ -40,7 +39,7 @@ const Tasks = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [view, setView] = useState("board");
 
-  const {data, isLoading} = useGetAllTaskQuery({
+  const { data, isLoading } = useGetAllTaskQuery({
     strQuery: status,
     isTrashed: "",
     search: ""

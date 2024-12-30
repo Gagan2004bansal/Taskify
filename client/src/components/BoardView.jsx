@@ -40,6 +40,8 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import AddTask from '../components/task/AddTask';
 import AddSubTask from '../components/task/AddSubTask';
+import { useDuplicateTaskMutation, useTrashTaskMutation } from '../redux/slices/api/taskApiSlice';
+import { toast } from 'react-toastify';
 
 const BoardView = ({ tasks }) => {
 
@@ -80,6 +82,9 @@ const BoardView = ({ tasks }) => {
   const [openSubTaskDialog, setOpenSubTaskDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
+  const [deleteTask] = useTrashTaskMutation();
+  const [duplicateTask] = useDuplicateTaskMutation();
+
   const TaskDialog = ({ task }) => {
     const menuItems = [
       {
@@ -105,14 +110,50 @@ const BoardView = ({ tasks }) => {
       {
         label: "Duplicate",
         icon: <CopyCheck className="h-4 w-4" />,
-        onClick: () => console.log("Duplicate task", task?._id)
+        onClick: () => duplicateHandler(),
       },
       {
         label: "Delete",
         icon: <Trash2 className="h-4 w-4" />,
-        onClick: () => console.log("Delete task", task?._id)
+        onClick: () => deleteHandler(),
       },
     ];
+
+    const deleteHandler = async () => {
+      try {
+
+        const res = await deleteTask({
+          id: task._id,
+          isTrashed: "trash",
+        }).unwrap();
+
+        toast.success(res?.message);
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+
+
+      } catch (error) {
+        console.log(error);
+        toast.error(err?.data?.message || err.error);
+      }
+    };
+
+    const duplicateHandler = async () => {
+      try {
+        const res = await duplicateTask(task._id).unwrap();
+
+        toast.success(res?.message);
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } catch (error) {
+        console.log(error);
+        toast.error(err?.data?.message || err.error);
+      }
+    };
 
     return (
       <DropdownMenu>
@@ -208,7 +249,7 @@ const BoardView = ({ tasks }) => {
                   {task.assets?.length > 0 && <HoverCardContent className="w-80">
                     <div className="grid grid-cols-2 gap-2">
                       {task.assets?.map((asset, index) => (
-                        <img key={index} src={asset} alt={`Asset ${index + 1}`} className="w-full h-24 object-cover rounded-md"/>
+                        <img key={index} src={asset} alt={`Asset ${index + 1}`} className="w-full h-24 object-cover rounded-md" />
                       ))}
                     </div>
                   </HoverCardContent>}

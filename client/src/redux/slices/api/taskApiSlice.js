@@ -1,4 +1,3 @@
-import { data } from "react-router-dom";
 import { apiSlice } from "../apiSlice";
 const TASKS_URL = "/task";
 
@@ -13,7 +12,7 @@ export const taskApiSlice = apiSlice.injectEndpoints({
         }),
 
         getAllTask: builder.query({
-            query: ({strQuery, isTrashed, search}) => ({
+            query: ({ strQuery, isTrashed, search }) => ({
                 url: `${TASKS_URL}?stage=${strQuery}&isTrashed=${isTrashed}&search=${search}`,
                 method: "GET",
                 credentials: "include",
@@ -41,14 +40,23 @@ export const taskApiSlice = apiSlice.injectEndpoints({
         updateTask: builder.mutation({
             query: (data) => ({
                 url: `${TASKS_URL}/update/${data._id}`,
-                method: "POST",
+                method: "PUT",
                 body: data,
                 credentials: "include",
             }),
         }),
-    }),
-}); 
 
-export const {useGetDashboardStatsQuery, useGetAllTaskQuery,
-    useCreateTaskMutation, useUpdateTaskMutation, useDuplicateTaskMutation
+        trashTask: builder.mutation({
+            query: (data) => ({
+                url: `${TASKS_URL}/${data.id}`,
+                method: "PUT",
+                credentials: "include",
+            }),
+        }),
+    }),
+});
+
+export const { useGetDashboardStatsQuery, useGetAllTaskQuery,
+    useCreateTaskMutation, useUpdateTaskMutation, useDuplicateTaskMutation,
+    useTrashTaskMutation
 } = taskApiSlice;

@@ -10,13 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
 import { Card, CardContent } from "@/components/ui/card";
-import { toast } from 'react-toastify'; 
-import 'react-toastify/dist/ReactToastify.css'; 
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-const LISTS = ["TODO", "IN PROGRESS", "COMPLETED"];
-const PRIORITY = ["HIGH", "MEDIUM", "NORMAL", "LOW"];
+const LISTS = ["todo", "in progress", "completed"];
+const PRIORITY = ["high", "medium", "normal", "low"];
+
 
 const AddTask = ({ open, setOpen, task = null }) => {
+
   const [formData, setFormData] = useState({
     title: task?.title || "",
     date: task?.date || new Date().toISOString().split("T")[0],
@@ -35,20 +37,20 @@ const AddTask = ({ open, setOpen, task = null }) => {
   const uploadFile = async (file) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', 'CloudStore'); 
+    formData.append('upload_preset', 'CloudStore');
 
     try {
       const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/dz5ezyudo/image/upload`, 
+        `https://api.cloudinary.com/v1_1/dz5ezyudo/image/upload`,
         formData,
         {
           method: 'POST',
         }
       );
-      return response.data.secure_url; 
+      return response.data.secure_url;
     } catch (error) {
       console.error('Error uploading file to Cloudinary:', error);
-      throw error; 
+      throw error;
     }
   };
 
@@ -98,7 +100,7 @@ const AddTask = ({ open, setOpen, task = null }) => {
       }, 500);
     } catch (error) {
       console.error("Error handling submission:", error);
-      toast.error(error?.data?.message || error.message); 
+      toast.error(error?.data?.message || error.message);
     } finally {
       setUploading(false);
     }
