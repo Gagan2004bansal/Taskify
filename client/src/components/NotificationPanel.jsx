@@ -1,16 +1,10 @@
-import { Bell, MessageCircle, Check } from 'lucide-react';
+import { Bell, MessageCircle, Check, icons } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover,PopoverContent,PopoverTrigger} from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { useGetNotificatinsQuery, useMarkNotiAsReadMutation } from '../redux/slices/api/userApiSlice';
-import { useState } from 'react';
 
 const ICONS = {
     alert: Bell,
@@ -18,8 +12,6 @@ const ICONS = {
 };
 
 export default function NotificationPanel() {
-    const [open, setOpen] = useState(false);
-    const [selected, setSelected] = useState(null);
 
     const { data, refetch } = useGetNotificatinsQuery();
     const [markAsRead] = useMarkNotiAsReadMutation();

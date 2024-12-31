@@ -9,7 +9,7 @@ router.post("/login", loginUser);
 router.post("/logout", logoutUser);
 
 router.get("/get-team", protectRoute, isAdminRoute, getTeamList);
-router.get("/notification", protectRoute, getNotificationList);
+router.get("/notifications", protectRoute, getNotificationList);
 
 router.put("/profile", protectRoute, updateUserProfile);
 router.put("/read-noti", protectRoute, markNotificationRead);
