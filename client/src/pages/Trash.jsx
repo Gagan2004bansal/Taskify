@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Card,
+ Card,
   CardContent,
   CardHeader,
   CardTitle,
@@ -121,12 +121,12 @@ const SubTasksPreview = ({ subTasks }) => (
     <HoverCardTrigger asChild>
       <Button variant="ghost" size="sm" className="h-8">
         <ListTodo className="h-4 w-4 mr-2" />
-        {subTasks.length} Subtasks
+        {subTasks?.length} Subtasks
       </Button>
     </HoverCardTrigger>
     <HoverCardContent className="w-80">
       <div className="space-y-2">
-        {subTasks.map((task) => (
+        {subTasks?.map((task) => (
           <div key={task._id} className="flex items-center gap-2">
             <Badge variant="outline">{task.tag}</Badge>
             <span className="text-sm">{task.title}</span>
