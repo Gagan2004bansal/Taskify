@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { 
+import React, { useEffect, useState } from 'react';
+import {
   Card,
   CardContent,
   CardHeader,
@@ -28,22 +28,24 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
-import { Avatar, AvatarFallback} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Trash2, 
-  RotateCcw, 
-  ArrowUp, 
-  ArrowDown, 
+import {
+  Trash2,
+  RotateCcw,
+  ArrowUp,
+  ArrowDown,
   ChevronUp,
   Users,
   Paperclip,
   ListTodo,
-  Minus
+  Minus,
+  Loader2
 } from 'lucide-react';
 
-import { tasks as tasksData } from "../assets/data";
+import { useDeleteRestoreTaskMutation, useGetAllTaskQuery } from '../redux/slices/api/taskApiSlice';
+import { toast } from 'sonner';
 
 const PRIORITY_ICONS = {
   high: <ChevronUp className="h-4 w-4" />,
@@ -102,9 +104,9 @@ const TaskAssets = ({ assets }) => (
     <HoverCardContent className="w-80">
       <div className="grid grid-cols-2 gap-2">
         {assets.map((asset, index) => (
-          <img 
+          <img
             key={index}
-            src={asset} 
+            src={asset}
             alt={`Asset ${index + 1}`}
             className="w-full h-24 object-cover rounded-md"
           />
@@ -140,20 +142,38 @@ const TrashedTasks = () => {
   const [alertConfig, setAlertConfig] = useState({
     title: '',
     description: '',
-    action: () => {},
+    action: () => { },
     type: 'delete'
   });
-  
-  const [tasks, setTasks] = useState(tasksData);
+
+  const [tasks, setTasks] = useState([]);
+  const { data, isLoading, refetch } = useGetAllTaskQuery({
+    strQuery: "",
+    isTrashed: "true",
+    search: ""
+  });
+  const [deleteRestore] = useDeleteRestoreTaskMutation();
+
+
+  useEffect(() => {
+    if (data?.tasks) {
+      setTasks(data.tasks);
+    }
+  }, [data]);
 
   const handleDelete = async (id) => {
     setAlertConfig({
       title: 'Delete Task',
       description: 'Are you sure you want to permanently delete this task? This action cannot be undone.',
       action: async () => {
-        // Add delete API call here
-        // await deleteTask(id);
-        setTasks(tasks.filter(task => task._id !== id));
+        try {
+          const res = await deleteRestore({ id, actionType: 'delete' }).unwrap();
+          setTasks(prevTasks => prevTasks.filter(task => task._id !== id));
+          toast.success(res?.message);
+        } catch (error) {
+          toast(error?.data?.message || error.error);
+          console.error('Failed to delete task:', error);
+        }
       },
       type: 'delete'
     });
@@ -165,9 +185,14 @@ const TrashedTasks = () => {
       title: 'Restore Task',
       description: 'Are you sure you want to restore this task?',
       action: async () => {
-        // Add restore API call here
-        // await restoreTask(id);
-        setTasks(tasks.filter(task => task._id !== id));
+        try {
+          const res = await deleteRestore({ id, actionType: 'restore' }).unwrap();
+          toast.success(res?.message);
+          setTasks(prevTasks => prevTasks.filter(task => task._id !== id));
+        } catch (error) {
+          toast(error?.data?.message || error.error);
+          console.error('Failed to restore task:', error);
+        }
       },
       type: 'restore'
     });
@@ -179,9 +204,14 @@ const TrashedTasks = () => {
       title: 'Delete All Tasks',
       description: 'Are you sure you want to permanently delete all trashed tasks? This action cannot be undone.',
       action: async () => {
-        // Add delete all API call here
-        // await deleteAllTasks();
-        setTasks([]);
+        try {
+          const res = await deleteRestore({ actionType: 'deleteAll' }).unwrap();
+          setTasks([]);
+          toast.success(res?.message);
+        } catch (error) {
+          toast(error?.data?.message || error.error);
+          console.error('Failed to delete all tasks:', error);
+        }
       },
       type: 'deleteAll'
     });
@@ -193,14 +223,29 @@ const TrashedTasks = () => {
       title: 'Restore All Tasks',
       description: 'Are you sure you want to restore all trashed tasks?',
       action: async () => {
-        // Add restore all API call here
-        // await restoreAllTasks();
-        setTasks([]);
+        try {
+          const res = await deleteRestore({ actionType: 'restoreAll' }).unwrap();
+          setTasks([]);
+          toast.success(res?.message);
+        } catch (error) {
+          toast(error?.data?.message || error.error);
+          console.error('Failed to restore all tasks:', error);
+        }
       },
       type: 'restoreAll'
     });
     setAlertOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+        <p className="text-sm text-muted-foreground">Loading Task</p>
+      </div>
+    );
+  }
+
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -249,7 +294,7 @@ const TrashedTasks = () => {
                       <TableCell>
                         <div className="space-y-1">
                           <div className="font-medium">{task.title}</div>
-                          {task.subTasks.length > 0 && (
+                          {task.subTask.length > 0 && (
                             <SubTasksPreview subTasks={task.subTasks} />
                           )}
                         </div>

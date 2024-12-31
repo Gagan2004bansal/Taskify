@@ -53,10 +53,44 @@ export const taskApiSlice = apiSlice.injectEndpoints({
                 credentials: "include",
             }),
         }),
+
+        createSubTask: builder.mutation({
+            query: ({ data, id }) => ({
+                url: `${TASKS_URL}/create-subtask/${id}`,
+                method: "PUT",
+                body: data,
+                credentials: "include",
+            })
+        }),
+
+        getSingleTask: builder.query({
+            query: (id) => ({
+                url: `${TASKS_URL}/${id}`,
+                method:"GET",
+                credentials: "include",
+            })
+        }),
+
+        postTrackActivity: builder.mutation({
+            query: ({data, id})=> ({
+                url: `${TASKS_URL}/activity/${id}`,
+                method: "POST",
+                body: data,
+                credentials: "include",
+            })
+        }),
+
+        deleteRestoreTask: builder.mutation({
+            query: ({id, actionType}) => ({
+                url: `${TASKS_URL}/delete-restore/${id}?actionType=${actionType}`,
+                method: "DELETE",
+                credentials: "include",
+            })
+        })
     }),
 });
 
 export const { useGetDashboardStatsQuery, useGetAllTaskQuery,
     useCreateTaskMutation, useUpdateTaskMutation, useDuplicateTaskMutation,
-    useTrashTaskMutation
+    useTrashTaskMutation, useCreateSubTaskMutation, useGetSingleTaskQuery, usePostTrackActivityMutation,useDeleteRestoreTaskMutation
 } = taskApiSlice;

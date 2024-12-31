@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -17,6 +17,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import AddSubTask from '../task/AddSubTask';
 
 const getInitials = (name) => {
     return name
@@ -35,6 +36,9 @@ const formatDate = (date) => {
 };
 
 const Details = ({ task }) => {
+    const [openSubTaskDialog, setOpenSubTaskDialog] = useState(false);
+    const [selectedTask, setSelectedTask] = useState(null);
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-8">
@@ -61,7 +65,7 @@ const Details = ({ task }) => {
                                 <div className="bg-primary/10 p-2 rounded-lg mb-2 group-hover:bg-primary/20 ">
                                     <ListTodo className="w-6 h-6 text-primary mx-auto" />
                                 </div>
-                                <p className="text-3xl font-bold text-primary">{task.subTasks?.length}</p>
+                                <p className="text-3xl font-bold text-primary">{task.subTask?.length}</p>
                             </div>
                             <p className="text-sm text-gray-600 font-medium">Active Sub-tasks</p>
                         </div>
@@ -121,14 +125,14 @@ const Details = ({ task }) => {
                                 <CardTitle className="text-lg font-semibold text-slate-800">Sub-tasks</CardTitle>
                                 <CardDescription>Task breakdown and progress</CardDescription>
                             </div>
-                            <Button variant="outline" size="sm" className="gap-2">
+                            <Button variant="outline" size="sm" className="gap-2" onClick={() => { setSelectedTask(task); setOpenSubTaskDialog(true) }}>
                                 <ListTodo className="w-4 h-4" />
                                 Add SubTask
                             </Button>
                         </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {task.subTasks?.map((subtask, index) => (
+                        {task.subTask?.map((subtask, index) => (
                             <div key={index} className="flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-all duration-300 border border-transparent hover:border-slate-200 cursor-pointer group">
                                 <div className="mt-1">
                                     <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
@@ -176,7 +180,7 @@ const Details = ({ task }) => {
                         <div className="grid grid-cols-1 gap-6">
                             {task.assets?.map((asset, index) => (
                                 <div key={index} className="group relative overflow-hidden rounded-xl shadow-sm border border-slate-200 hover:border-primary/50 transition-colors">
-                                    <img src={asset} alt={`Asset ${index + 1}`} className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105"/>
+                                    <img src={asset} alt={`Asset ${index + 1}`} className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105" />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300">
                                         {/* <div className="absolute bottom-0 left-0 right-0 p-4">
                                             <div className="flex gap-2 justify-end">
@@ -197,6 +201,8 @@ const Details = ({ task }) => {
                     </ScrollArea>
                 </CardContent>
             </Card>
+
+            <AddSubTask open={openSubTaskDialog} setOpen={setOpenSubTaskDialog} id={selectedTask?._id} />
         </div>
     );
 };

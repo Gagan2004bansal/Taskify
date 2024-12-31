@@ -14,18 +14,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { 
-  MessageSquare, 
-  ThumbsUp, 
-  User, 
-  Bug, 
-  CheckCircle2, 
+import {
+  MessageSquare,
+  ThumbsUp,
+  User,
+  Bug,
+  CheckCircle2,
   Timer,
   Calendar,
   Plus,
   PlusCircle
 } from 'lucide-react';
 import moment from 'moment';
+import { usePostTrackActivityMutation } from '../../redux/slices/api/taskApiSlice';
+import { toast } from 'sonner';
 
 const TASKTYPEICON = {
   commented: (
@@ -73,37 +75,84 @@ const getBadgeVariant = (type) => {
 };
 
 const act_types = [
-  "Started",
-  "Completed",
-  "In Progress",
-  "Commented",
-  "Bug",
-  "Assigned",
+  "assigned",
+  "started",
+  "in progress",
+  "bug",
+  "completed",
+  "commented"
 ];
 
-const AddActivityForm = ({ onClose }) => {
+
+
+const ActivityCard = ({ item, isConnected }) => {
+  return (
+    <div className='flex space-x-4 relative group'>
+      <div className='flex flex-col items-center flex-shrink-0'>
+        <div className='transform transition-transform group-hover:scale-110'>
+          {TASKTYPEICON[item?.type]}
+        </div>
+        {isConnected && (
+          <div className='w-0.5 bg-gray-200 h-16 absolute top-12 left-6 group-hover:bg-gray-300 transition-colors' />
+        )}
+      </div>
+
+      <div className='flex flex-col gap-y-2 mb-8 bg-gray-50 p-5 rounded-xl flex-grow border border-gray-100 hover:bg-gray-100/50 transition-colors'>
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center gap-2'>
+            <p className='font-semibold text-gray-900'>{item?.by?.name}</p>
+            <Badge variant={getBadgeVariant(item?.type)} className='capitalize'>
+              {item?.type}
+            </Badge>
+          </div>
+          <div className='flex items-center gap-2 text-gray-500'>
+            <Calendar className="w-4 h-4" />
+            <span className='text-sm'>{moment(item?.date).fromNow()}</span>
+          </div>
+        </div>
+        <p className='text-gray-700 leading-relaxed'>{item?.activity}</p>
+      </div>
+    </div>
+  );
+};
+
+const Activities = ({ activity, id, refetch }) => {
+  console.log(activity);
+  const [open, setOpen] = useState(false);
+
+  const AddActivityForm = ({ onClose }) => {
     const [selected, setSelected] = useState(act_types[0]);
     const [text, setText] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
-  
+    const [postActivity, { isLoading }] = usePostTrackActivityMutation();
+
     const handleSubmit = async () => {
-      setIsLoading(true);
-      // submit logic later
-      setTimeout(() => {
-        setIsLoading(false);
+      try {
+        console.log(selected, text);
+        await postActivity({
+          data: {
+            type: selected,
+            activity: text
+          },
+          id
+        }).unwrap();
+
+        setText("");
+        setSelected(act_types[0]);
         onClose();
-      }, 1000);
+        toast.success("Activity added successfully");
+        refetch();
+      }
+      catch (error) {
+        console.log(error);
+        toast.error(error?.data?.message || error.error);
+      }
     };
-  
+
     return (
       <div className='space-y-6 '>
         <div className='space-y-4'>
           <Label className="text-base">Activity Type</Label>
-          <RadioGroup
-            value={selected}
-            onValueChange={setSelected}
-            className='grid grid-cols-2 gap-4'
-          >
+          <RadioGroup value={selected} onValueChange={setSelected} className='grid grid-cols-2 gap-4'>
             {act_types.map((type) => (
               <div key={type} className='flex items-center space-x-2 hover:bg-gray-100 p-2 rounded-lg transition-colors'>
                 <RadioGroupItem value={type} id={type} />
@@ -112,22 +161,13 @@ const AddActivityForm = ({ onClose }) => {
             ))}
           </RadioGroup>
         </div>
-  
+
         <div className='space-y-4'>
           <Label className="text-base">Activity Details</Label>
-          <Textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Describe the activity..."
-            className='min-h-[150px] resize-none'
-          />
+          <Textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Describe the activity..." className='min-h-[150px] resize-none' />
         </div>
-  
-        <Button
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className='w-full h-12 text-base'
-        >
+
+        <Button onClick={handleSubmit} disabled={isLoading} className='w-full h-12 text-base'>
           {isLoading ? (
             <Timer className="mr-2 h-4 w-4 animate-spin" />
           ) : (
@@ -138,81 +178,47 @@ const AddActivityForm = ({ onClose }) => {
       </div>
     );
   };
-  
-  const ActivityCard = ({ item, isConnected }) => {
-    return (
-      <div className='flex space-x-4 relative group'>
-        <div className='flex flex-col items-center flex-shrink-0'>
-          <div className='transform transition-transform group-hover:scale-110'>
-            {TASKTYPEICON[item?.type]}
+
+  return (
+    <div className='w-full max-w-7xl mx-auto p-6'>
+      <Card className='shadow-lg'>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl">Activity Timeline</CardTitle>
+            <CardDescription>Track all project activities and updates</CardDescription>
           </div>
-          {isConnected && (
-            <div className='w-0.5 bg-gray-200 h-16 absolute top-12 left-6 group-hover:bg-gray-300 transition-colors' />
-          )}
-        </div>
-  
-        <div className='flex flex-col gap-y-2 mb-8 bg-gray-50 p-5 rounded-xl flex-grow border border-gray-100 hover:bg-gray-100/50 transition-colors'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-2'>
-              <p className='font-semibold text-gray-900'>{item?.by?.name}</p>
-              <Badge variant={getBadgeVariant(item?.type)} className='capitalize'>
-                {item?.type}
-              </Badge>
-            </div>
-            <div className='flex items-center gap-2 text-gray-500'>
-              <Calendar className="w-4 h-4" />
-              <span className='text-sm'>{moment(item?.date).fromNow()}</span>
-            </div>
-          </div>
-          <p className='text-gray-700 leading-relaxed'>{item?.activity}</p>
-        </div>
-      </div>
-    );
-  };
-  
-  const Activities = ({ activity }) => {
-    const [open, setOpen] = useState(false);
-  
-    return (
-      <div className='w-full max-w-7xl mx-auto p-6'>
-        <Card className='shadow-lg'>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl">Activity Timeline</CardTitle>
-              <CardDescription>Track all project activities and updates</CardDescription>
-            </div>
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <PlusCircle className="h-4 w-4" />
-                  Add Activity
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-sm sm:max-w-md rounded-2xl">
-                <DialogHeader>
-                  <DialogTitle>Add New Activity</DialogTitle>
-                  <DialogDescription>
-                    Create a new activity update for the project timeline.
-                  </DialogDescription>
-                </DialogHeader>
-                <AddActivityForm onClose={() => setOpen(false)} />
-              </DialogContent>
-            </Dialog>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className='h-[700px] pr-4'>
-              {activity?.map((el, index) => (
-                <ActivityCard
-                  key={index}
-                  item={el}
-                  isConnected={index < activity.length - 1}
-                />
-              ))}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  };
-  
-  export default Activities;
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <PlusCircle className="h-4 w-4" />
+                Add Activity
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-sm sm:max-w-md rounded-2xl">
+              <DialogHeader>
+                <DialogTitle>Add New Activity</DialogTitle>
+                <DialogDescription>
+                  Create a new activity update for the project timeline.
+                </DialogDescription>
+              </DialogHeader>
+              <AddActivityForm onClose={() => setOpen(false)} />
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className='h-[700px] pr-4'>
+            {activity?.map((el, index) => (
+              <ActivityCard
+                key={index}
+                item={el}
+                isConnected={index < activity.length - 1}
+              />
+            ))}
+          </ScrollArea>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default Activities;

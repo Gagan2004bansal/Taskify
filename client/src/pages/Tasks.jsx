@@ -45,6 +45,8 @@ const Tasks = () => {
     search: ""
   });
 
+  console.log(data);
+
 
   if (isLoading) return (
     <div className="w-full space-y-4">

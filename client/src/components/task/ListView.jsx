@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { 
+import {
   Card,
   CardContent,
   CardHeader,
@@ -37,7 +37,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   ChevronUp,
   ChevronDown,
   ArrowUp,
@@ -53,6 +53,10 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { getInitials } from '../../utils';
+import { useTrashTaskMutation } from '../../redux/slices/api/taskApiSlice';
+import { toast } from 'sonner';
+import AddTask from './AddTask';
+
 
 const PRIORITY_CONFIG = {
   high: {
@@ -93,11 +97,11 @@ const STATUS_CONFIG = {
 };
 
 
-
-
 const ListView = ({ tasks = [] }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [deleteTask] = useTrashTaskMutation();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const formatDate = (date) => format(new Date(date), "MMM d, hh:mm a");
 
@@ -106,8 +110,20 @@ const ListView = ({ tasks = [] }) => {
     setOpenDialog(true);
   };
 
-  const handleDelete = () => {
-    // TODO: Implement delete functionality
+  const handleDelete = async() => {
+    console.log(selectedTask);
+    try {
+      const res = await deleteTask({
+        id: selectedTask._id,
+        isTrashed: "trash",
+      }).unwrap();
+
+      toast.success(res?.message);
+      window.location.reload();
+    } catch (error) {
+      console.log(error);
+      toast.error(error?.data?.message || error.error);
+    }
     setOpenDialog(false);
     setSelectedTask(null);
   };
@@ -140,7 +156,7 @@ const ListView = ({ tasks = [] }) => {
       </HoverCardContent>
     </HoverCard>
   );
-  
+
   const TaskAssets = ({ assets }) => (
     <HoverCard>
       <HoverCardTrigger asChild>
@@ -152,9 +168,9 @@ const ListView = ({ tasks = [] }) => {
       <HoverCardContent className="w-80">
         <div className="grid grid-cols-2 gap-2">
           {assets?.map((asset, index) => (
-            <img 
+            <img
               key={index}
-              src={asset} 
+              src={asset}
               alt={`Asset ${index + 1}`}
               className="w-full h-24 object-cover rounded-md"
             />
@@ -163,7 +179,7 @@ const ListView = ({ tasks = [] }) => {
       </HoverCardContent>
     </HoverCard>
   );
-  
+
   const SubTasksPreview = ({ subTasks }) => (
     <HoverCard>
       <HoverCardTrigger asChild>
@@ -184,7 +200,7 @@ const ListView = ({ tasks = [] }) => {
       </HoverCardContent>
     </HoverCard>
   );
-  
+
   const ActivitiesPreview = ({ activities }) => (
     <HoverCard>
       <HoverCardTrigger asChild>
@@ -205,7 +221,7 @@ const ListView = ({ tasks = [] }) => {
                 <span className="font-medium">{activity.by.name}</span>
                 <span className="text-muted-foreground"> {activity.activity}</span>
                 <p className="text-xs text-muted-foreground">
-                  {formatDate(activity?.date)} 
+                  {formatDate(activity?.date)}
                 </p>
               </div>
             </div>
@@ -291,7 +307,10 @@ const ListView = ({ tasks = [] }) => {
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button variant="ghost" >
+                                <Button variant="ghost" onClick={() => {
+                                  setIsDialogOpen(true);
+                                  setSelectedTask(task);
+                                }}>
                                   <Pencil className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
@@ -329,7 +348,7 @@ const ListView = ({ tasks = [] }) => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Task</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this task? This action cannot be undone.
+              Are you sure you want to delete this task?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -340,6 +359,9 @@ const ListView = ({ tasks = [] }) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+
+      <AddTask open={isDialogOpen} task={selectedTask} setOpen={setIsDialogOpen} />
     </div>
   );
 };

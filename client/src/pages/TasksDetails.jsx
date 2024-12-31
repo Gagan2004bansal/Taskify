@@ -4,10 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
-import { tasks } from '../assets/data';
-import { ClipboardList, Activity, Calendar, Users } from 'lucide-react';
+import { ClipboardList, Activity, Calendar, Users, Loader2 } from 'lucide-react';
 import Activities from '../components/task_details/Activities';
 import Details from '../components/task_details/Details';
+import { useGetSingleTaskQuery } from '../redux/slices/api/taskApiSlice';
 
 const PRIORITY_STYLES = {
   high: 'bg-red-50 text-red-700 border-red-200 shadow-sm shadow-red-100',
@@ -23,11 +23,22 @@ const STAGE_STYLES = {
 
 const TaskDetails = () => {
   const { id } = useParams();
-  const task = tasks[2];
-
+  const {data, isLoading, refetch} = useGetSingleTaskQuery(id);
+  
   const formatDate = (date) => {
     return format(new Date(date), 'MMM dd, yyyy');
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+        <p className="text-sm text-muted-foreground">Loading Task</p>
+      </div>
+    );
+  }
+  console.log(data.task);
+  const task = data.task;
 
   return (
     <div className="mx-auto py-8 px-4 max-w-7xl">
@@ -47,16 +58,10 @@ const TaskDetails = () => {
               </div>
             </div>
             <div className="flex gap-3">
-              <Badge
-                variant="outline"
-                className={`text-sm px-4 py-1.5 rounded-full font-medium ${PRIORITY_STYLES[task.priority]}`}
-              >
+              <Badge variant="outline" className={`text-sm px-4 py-1.5 rounded-full font-medium ${PRIORITY_STYLES[task.priority]}`}>
                 {task.priority.toUpperCase()} PRIORITY
               </Badge>
-              <Badge
-                variant="outline"
-                className={`text-sm px-4 py-1.5 rounded-full font-medium ${STAGE_STYLES[task.stage]}`}
-              >
+              <Badge variant="outline" className={`text-sm px-4 py-1.5 rounded-full font-medium ${STAGE_STYLES[task.stage]}`}>
                 {task.stage.toUpperCase()}
               </Badge>
             </div>
@@ -81,7 +86,7 @@ const TaskDetails = () => {
             </TabsContent>
 
             <TabsContent value="activity">
-              <Activities activity={task.activities} />
+              <Activities activity={data?.task?.activities} id={data?.task._id} refetch={refetch}/>
             </TabsContent>
           </Tabs>
         </CardContent>

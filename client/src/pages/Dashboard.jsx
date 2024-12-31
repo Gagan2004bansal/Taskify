@@ -85,18 +85,13 @@ const Dashboard = () => {
     const { data } = useGetDashboardStatsQuery();
 
     const { user } = useSelector((state) => state.auth);
+    console.log(data);
 
     const stats = [
         { icon: Layers, label: 'Total Tasks', value: data?.totalTasks || 0, trend: 12, color: 'bg-blue-500' },
         { icon: CheckCircle, label: 'Completed', value: data?.tasks.completed || 0, trend: 8, color: 'bg-green-500' },
         { icon: Clock, label: 'In Progress', value: data?.tasks['in progress'] || 0, trend: -5, color: 'bg-amber-500' },
         { icon: Users, label: 'Team Members', value: data?.users.length || 0, color: 'bg-purple-500' }
-    ];
-
-    const pieData = [
-        { name: 'Todo', value: data?.tasks.todo || 0 },
-        { name: 'In Progress', value: data?.tasks['in progress'] || 0 },
-        { name: 'Completed', value: data?.tasks.completed || 0 }
     ];
 
     return (

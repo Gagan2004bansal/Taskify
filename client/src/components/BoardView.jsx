@@ -41,7 +41,7 @@ import { format } from 'date-fns';
 import AddTask from '../components/task/AddTask';
 import AddSubTask from '../components/task/AddSubTask';
 import { useDuplicateTaskMutation, useTrashTaskMutation } from '../redux/slices/api/taskApiSlice';
-import { toast } from 'react-toastify';
+import { toast } from 'sonner';
 
 const BoardView = ({ tasks }) => {
 
@@ -128,10 +128,7 @@ const BoardView = ({ tasks }) => {
         }).unwrap();
 
         toast.success(res?.message);
-
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
+        window.location.reload();
 
 
       } catch (error) {
@@ -259,12 +256,12 @@ const BoardView = ({ tasks }) => {
                   <HoverCardTrigger asChild>
                     <Button variant="ghost" size="sm" className="h-8">
                       <ListTodo className="h-4 w-4 mr-2" />
-                      {task.subTasks?.length || 0}
+                      {task.subTask?.length || 0}
                     </Button>
                   </HoverCardTrigger>
                   <HoverCardContent className="w-80">
                     <div className="space-y-2">
-                      {task.subTasks?.map((subtask) => (
+                      {task.subTask?.map((subtask) => (
                         <div key={subtask._id} className="space-y-1">
                           <h4 className="text-sm font-medium">{subtask.title}</h4>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -318,7 +315,7 @@ const BoardView = ({ tasks }) => {
                   </HoverCardContent>
                 </HoverCard>
 
-                <Button variant="ghost" size="sm" className="h-8">
+                <Button variant="ghost" size="sm" className="h-8" onClick={() => { setSelectedTask(task); setOpenSubTaskDialog(true) }}>
                   Add Subtask
                 </Button>
               </div>
@@ -328,7 +325,7 @@ const BoardView = ({ tasks }) => {
       </div>
 
       <AddTask open={openTaskDialog} setOpen={setOpenTaskDialog} task={selectedTask} />
-      <AddSubTask open={openSubTaskDialog} setOpen={setOpenSubTaskDialog} />
+      <AddSubTask open={openSubTaskDialog} setOpen={setOpenSubTaskDialog} id={selectedTask?._id} />
 
     </div>
   );
