@@ -12,10 +12,7 @@ const PORT = process.env.PORT || 4002;
 
 const app = express();
 
-app.options('*', cors({
-    origin: ["https://taskify-xmk3.onrender.com"],
-    credentials: true,
-}));
+app.options('*', cors());
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
