@@ -1,5 +1,7 @@
 # Full-Stack Task Manager (MERN Stack)
 
+**Deployed Link:** (https://taskify-5528.onrender.com)
+
 ## 📑 Table of Contents
 - [Overview](#overview)
 - [Features](#features)
